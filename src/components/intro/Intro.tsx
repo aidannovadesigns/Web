@@ -1,12 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
 import gsap from 'gsap'
 import s from './Intro.module.css'
-
-// Load R3F canvas client-side only — avoids SSR mismatch
-const IntroScene = dynamic(() => import('./IntroScene'), { ssr: false })
+import IntroScene from './IntroScene'
 
 export default function Intro() {
   const introRef    = useRef<HTMLDivElement>(null)
