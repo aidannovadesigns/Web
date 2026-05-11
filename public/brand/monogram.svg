@@ -1,0 +1,12 @@
+<!--
+  DEFAULT MONOGRAM — Horizon direction (Direction A)
+  Replace with chosen direction after client approval.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" aria-label="Meridian M mark">
+  <line x1="12" y1="88" x2="12" y2="12"/>
+  <line x1="12" y1="12" x2="50" y2="52"/>
+  <line x1="88" y1="12" x2="50" y2="52"/>
+  <line x1="88" y1="12" x2="88" y2="88"/>
+  <line x1="12" y1="52" x2="88" y2="52"/>
+  <line x1="12" y1="88" x2="88" y2="88"/>
+</svg>

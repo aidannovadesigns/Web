@@ -1,0 +1,20 @@
+<!--
+  MONOGRAM B — THE ARCH (Structural Arch Mark)
+  The M's inner valley is inverted: the two inner strokes rise to a POINTED ARCH.
+  Outer legs remain straight and tall.
+  The arch negative space references: coastal sea caves, Gothic arch windows,
+  the hull of a boat, a doorway into a home. Structural and ancient simultaneously.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="butt" stroke-linejoin="miter" aria-label="Meridian monogram — Arch direction">
+  <!-- Left outer leg (full height) -->
+  <line x1="12" y1="88" x2="12" y2="12"/>
+  <!-- Left inner stroke rises to arch apex — cubic curve for refined arch profile -->
+  <path d="M 12,88 C 12,60 42,28 50,20"/>
+  <!-- Right inner stroke mirrors, rising to same apex -->
+  <path d="M 88,88 C 88,60 58,28 50,20"/>
+  <!-- Right outer leg (full height) -->
+  <line x1="88" y1="12" x2="88" y2="88"/>
+  <!-- Subtle cap serifs — thin horizontal terminals at top of outer legs -->
+  <line x1="8" y1="12" x2="16" y2="12"/>
+  <line x1="84" y1="12" x2="92" y2="12"/>
+</svg>

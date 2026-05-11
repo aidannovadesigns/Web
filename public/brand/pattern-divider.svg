@@ -1,0 +1,11 @@
+<!--
+  SECTION DIVIDER — single horizontal rule with meridian tick marks
+  Use at full width as a section separator. Scales horizontally.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 16" preserveAspectRatio="none" fill="none">
+  <line x1="0" y1="8" x2="1440" y2="8" stroke="#1C1C1A" stroke-width="0.75" stroke-opacity="0.2"/>
+  <!-- Meridian tick marks at quarters -->
+  <line x1="360" y1="4" x2="360" y2="12" stroke="#1C1C1A" stroke-width="1" stroke-opacity="0.3"/>
+  <line x1="720" y1="2" x2="720" y2="14" stroke="#1C1C1A" stroke-width="1.2" stroke-opacity="0.4"/>
+  <line x1="1080" y1="4" x2="1080" y2="12" stroke="#1C1C1A" stroke-width="1" stroke-opacity="0.3"/>
+</svg>

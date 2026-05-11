@@ -1,0 +1,24 @@
+<!--
+  MONOGRAM C — THE FRAME (Blueprint Grid Mark)
+  The M is constructed from a 6×6 blueprint grid.
+  The outer square frame contains the letter as a drawing,
+  referencing architectural plans, site surveys, technical drawings.
+  At favicon scale the grid lines dissolve and only the M form reads.
+  At large scale the construction is visible — honest about its making.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-linecap="square" stroke-linejoin="miter" aria-label="Meridian monogram — Frame direction">
+  <!-- Outer frame -->
+  <rect x="4" y="4" width="92" height="92" stroke-width="2.5"/>
+  <!-- Blueprint grid (very light) — 6 divisions -->
+  <line x1="4" y1="35.3" x2="96" y2="35.3" stroke-width="0.6" stroke-opacity="0.3"/>
+  <line x1="4" y1="50"   x2="96" y2="50"   stroke-width="0.6" stroke-opacity="0.3"/>
+  <line x1="4" y1="64.7" x2="96" y2="64.7" stroke-width="0.6" stroke-opacity="0.3"/>
+  <line x1="35.3" y1="4" x2="35.3" y2="96" stroke-width="0.6" stroke-opacity="0.3"/>
+  <line x1="50"   y1="4" x2="50"   y2="96" stroke-width="0.6" stroke-opacity="0.3"/>
+  <line x1="64.7" y1="4" x2="64.7" y2="96" stroke-width="0.6" stroke-opacity="0.3"/>
+  <!-- M form — bold, sits confidently within frame with margin -->
+  <line x1="20" y1="82" x2="20" y2="18" stroke-width="4"/>
+  <line x1="20" y1="18" x2="50" y2="54" stroke-width="4"/>
+  <line x1="80" y1="18" x2="50" y2="54" stroke-width="4"/>
+  <line x1="80" y1="18" x2="80" y2="82" stroke-width="4"/>
+</svg>

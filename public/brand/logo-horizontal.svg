@@ -1,0 +1,35 @@
+<!--
+  HORIZONTAL LOCKUP — Monogram mark left, wordmark right
+  Monogram sits at same cap-height as wordmark
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 100" fill="none" stroke="currentColor" stroke-linecap="square" stroke-linejoin="miter" aria-label="Meridian — horizontal lockup">
+  <!-- Monogram (100×100 scaled, left side) -->
+  <g stroke-width="4">
+    <line x1="12" y1="88" x2="12" y2="12"/>
+    <line x1="12" y1="12" x2="50" y2="52"/>
+    <line x1="88" y1="12" x2="50" y2="52"/>
+    <line x1="88" y1="12" x2="88" y2="88"/>
+    <line x1="12" y1="52" x2="88" y2="52"/>
+    <line x1="12" y1="88" x2="88" y2="88"/>
+  </g>
+  <!-- Thin rule separator -->
+  <line x1="118" y1="16" x2="118" y2="84" stroke-width="1" stroke-opacity="0.35"/>
+  <!-- Wordmark (offset 138) -->
+  <g transform="translate(138,0)" stroke-width="3.8">
+    <polyline points="2,98 2,2 34,52 66,2 66,98"/>
+    <line x1="90" y1="2" x2="90" y2="98"/>
+    <line x1="90" y1="2" x2="146" y2="2"/>
+    <line x1="90" y1="50" x2="138" y2="50"/>
+    <line x1="90" y1="98" x2="146" y2="98"/>
+    <line x1="170" y1="2" x2="170" y2="98"/>
+    <path d="M 170,2 H 204 Q 230,2 230,28 Q 230,54 204,54 H 170"/>
+    <line x1="202" y1="54" x2="232" y2="98"/>
+    <line x1="260" y1="2" x2="260" y2="98"/>
+    <line x1="284" y1="2" x2="284" y2="98"/>
+    <path d="M 284,2 H 310 Q 342,2 342,50 Q 342,98 310,98 H 284"/>
+    <line x1="370" y1="2" x2="370" y2="98"/>
+    <polyline points="394,98 424,2 454,98"/>
+    <line x1="405" y1="66" x2="443" y2="66"/>
+    <polyline points="478,2 478,98 536,2 536,98"/>
+  </g>
+</svg>

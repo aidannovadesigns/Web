@@ -1,0 +1,388 @@
+.page {
+  background: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+/* ─── Header ──────────────────────────────────────────── */
+.header {
+  padding: 96px clamp(24px, 6vw, 120px) 48px;
+  border-bottom: 1px solid rgba(28,28,26,0.12);
+  position: relative;
+}
+
+.headerLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  margin-bottom: 24px;
+}
+
+.headerTitle {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 200;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variation-settings: 'opsz' 72, 'wght' 200, 'SOFT' 0;
+}
+
+.headerMeta {
+  margin-top: 32px;
+  font-size: 0.875rem;
+  color: var(--color-mid);
+  font-family: var(--font-sans);
+}
+
+/* ─── Nav ─────────────────────────────────────────────── */
+.nav {
+  padding: 0 clamp(24px, 6vw, 120px);
+  border-bottom: 1px solid rgba(28,28,26,0.08);
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar { display: none; }
+
+.navItem {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  padding: 20px 24px 20px 0;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur-micro) var(--ease-out-expo);
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.navItem:hover { color: var(--color-text); }
+
+/* ─── Sections ────────────────────────────────────────── */
+.section {
+  padding: 96px clamp(24px, 6vw, 120px);
+  border-bottom: 1px solid rgba(28,28,26,0.08);
+}
+
+.sectionLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  margin-bottom: 64px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sectionLabel::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(28,28,26,0.12);
+  max-width: 120px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variation-settings: 'opsz' 48, 'wght' 300;
+  margin-bottom: 48px;
+}
+
+/* ─── Logo Grid ───────────────────────────────────────── */
+.logoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2px;
+}
+
+.logoCell {
+  padding: 64px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  position: relative;
+}
+
+.logoCellDark  { background: #1C1C1A; }
+.logoCellSlate { background: var(--color-slate); }
+.logoCellLight { background: var(--color-bg); border: 1px solid rgba(28,28,26,0.08); }
+
+.logoCellLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  margin-top: auto;
+}
+
+.logoCellDark  .logoCellLabel { color: rgba(244,241,236,0.4); }
+.logoCellSlate .logoCellLabel { color: rgba(244,241,236,0.5); }
+
+.logoSvg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+}
+
+.monogramSvg {
+  width: 80px;
+  height: 80px;
+}
+
+/* ─── Monogram Choices ────────────────────────────────── */
+.monogramGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+@media (max-width: 768px) {
+  .monogramGrid { grid-template-columns: 1fr; }
+}
+
+.monogramCard {
+  padding: 64px 48px;
+  border: 1px solid rgba(28,28,26,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color var(--dur-micro) var(--ease-out-expo);
+}
+
+.monogramCard:hover { border-color: var(--color-slate); }
+
+.monogramCardLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  text-align: center;
+}
+
+.monogramCardDesc {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--color-mid);
+  text-align: center;
+  max-width: 240px;
+}
+
+.monogramDisplay {
+  width: 120px;
+  height: 120px;
+}
+
+/* ─── Type Scale ──────────────────────────────────────── */
+.typeRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.typeRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 32px;
+  align-items: baseline;
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(28,28,26,0.06);
+}
+
+.typeRowMeta {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  line-height: 1.4;
+}
+
+.typeRowMeta span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.625rem;
+  opacity: 0.6;
+}
+
+.typeSample {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ─── Colour ──────────────────────────────────────────── */
+.colourGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 2px;
+}
+
+.colourSwatch {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+}
+
+.colourSwatchName {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.colourSwatchHex {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  opacity: 0.7;
+}
+
+/* ─── Spacing ─────────────────────────────────────────── */
+.spacingRows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spacingRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.spacingBar {
+  background: var(--color-slate);
+  height: 2px;
+  opacity: 0.6;
+  transition: opacity var(--dur-micro) var(--ease-out-expo);
+  flex-shrink: 0;
+}
+
+.spacingRowLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  color: var(--color-mid);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+/* ─── Motion demos ────────────────────────────────────── */
+.motionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2px;
+}
+
+.motionCard {
+  border: 1px solid rgba(28,28,26,0.08);
+  padding: 40px;
+  overflow: hidden;
+}
+
+.motionCardLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  margin-bottom: 8px;
+}
+
+.motionCardBezier {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  color: var(--color-slate);
+  margin-bottom: 32px;
+  font-feature-settings: 'tnum';
+}
+
+.motionDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-slate);
+  margin-bottom: 16px;
+}
+
+.motionTrack {
+  width: 100%;
+  height: 2px;
+  background: rgba(28,28,26,0.1);
+  position: relative;
+  margin-top: 8px;
+}
+
+/* ─── Voice ───────────────────────────────────────────── */
+.voiceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 48px;
+}
+
+.voiceCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.voiceCardLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+}
+
+.voiceCardText {
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  font-weight: 300;
+  line-height: 1.5;
+  font-variation-settings: 'opsz' 24, 'wght' 300;
+}
+
+.voiceCardNote {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--color-mid);
+  line-height: 1.6;
+}
+
+/* ─── Footer ──────────────────────────────────────────── */
+.footer {
+  padding: 64px clamp(24px, 6vw, 120px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(28,28,26,0.12);
+}
+
+.footerLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+}

@@ -1,0 +1,22 @@
+<!--
+  IMAGE FRAME COMPONENT — geometric treatment for photos
+  A corner-only frame: thin lines at each corner referencing architectural drawings.
+  Layer over images at full size. Scale to any aspect ratio.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none" preserveAspectRatio="none">
+  <g stroke="#F4F1EC" stroke-width="1.5" stroke-linecap="square" stroke-opacity="0.7">
+    <!-- Top-left corner -->
+    <polyline points="0,40 0,0 40,0"/>
+    <!-- Top-right corner -->
+    <polyline points="360,0 400,0 400,40"/>
+    <!-- Bottom-right corner -->
+    <polyline points="400,260 400,300 360,300"/>
+    <!-- Bottom-left corner -->
+    <polyline points="40,300 0,300 0,260"/>
+  </g>
+  <!-- Subtle centre reticle -->
+  <g stroke="#F4F1EC" stroke-width="0.75" stroke-opacity="0.3">
+    <line x1="196" y1="150" x2="204" y2="150"/>
+    <line x1="200" y1="146" x2="200" y2="154"/>
+  </g>
+</svg>

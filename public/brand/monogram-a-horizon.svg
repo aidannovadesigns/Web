@@ -1,0 +1,21 @@
+<!--
+  MONOGRAM A — THE MERIDIAN (Horizon Line Mark)
+  The M's inner valley meets a horizontal line at mid-height.
+  That line IS the meridian — the horizon between sky and sea.
+  The rectangular negative space below reads as a window, gateway, or horizon framed.
+  References: architectural openings, Tadao Ando slot windows, Pacific horizon lines.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter" aria-label="Meridian monogram — Horizon direction">
+  <!-- Left outer leg -->
+  <line x1="12" y1="88" x2="12" y2="12"/>
+  <!-- Left inner diagonal to horizon point -->
+  <line x1="12" y1="12" x2="50" y2="52"/>
+  <!-- Right inner diagonal to horizon point -->
+  <line x1="88" y1="12" x2="50" y2="52"/>
+  <!-- Right outer leg -->
+  <line x1="88" y1="12" x2="88" y2="88"/>
+  <!-- THE MERIDIAN LINE — connects both legs at mid-height, bisects the inner valley -->
+  <line x1="12" y1="52" x2="88" y2="52"/>
+  <!-- Base line — grounds the mark, references a horizon -->
+  <line x1="12" y1="88" x2="88" y2="88"/>
+</svg>
