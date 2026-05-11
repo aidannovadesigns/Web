@@ -10,11 +10,12 @@ import s from './ScrollHero.module.css'
 const ScrollHeroCanvas = dynamic(() => import('./ScrollHeroCanvas'), { ssr: false })
 
 // Stage visibility windows — [fadeIn start, fadeIn end, fadeOut start, fadeOut end]
+// Gap p=0.50–0.74 reserved for 3D annotation labels (no text stage overlapping)
 const STAGES = [
-  [0.00, 0.08, 0.18, 0.26],  // 1: Brand / night sky + wireframe exploded
-  [0.24, 0.32, 0.50, 0.58],  // 2: "Architecture for the edge" (assembly begins)
-  [0.56, 0.63, 0.78, 0.86],  // 3: Stats — golden hour, building complete
-  [0.84, 0.91, 1.00, 1.00],  // 4: CTA — coastal morning
+  [0.00, 0.07, 0.15, 0.23],  // 1: Brand — night, wireframe
+  [0.21, 0.29, 0.43, 0.51],  // 2: Statement — foundation assembles, dawn
+  [0.74, 0.81, 0.90, 0.96],  // 3: Stats — golden hour, building complete
+  [0.92, 0.97, 1.00, 1.00],  // 4: CTA — coastal morning
 ]
 
 function stageOp(p: number, s: number[]): number {
@@ -72,8 +73,8 @@ export default function ScrollHero() {
           scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p * 10))
         }
 
-        const starts = [0, 0.24, 0.56, 0.84]
-        const ends   = [0.24, 0.56, 0.84, 1.00]
+        const starts = [0, 0.21, 0.74, 0.92]
+        const ends   = [0.23, 0.51, 0.96, 1.00]
         progressItems.current.forEach((el, i) => {
           if (!el) return
           el.classList.toggle(s['is-active'], p >= starts[i] && p < ends[i])

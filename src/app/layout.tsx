@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import './globals.css'
 import SmoothScroll from '@/components/layout/SmoothScroll'
+import PageCurtain from '@/components/layout/PageCurtain'
 import Cursor from '@/components/cursor/Cursor'
 import Nav from '@/components/nav/Nav'
 import Intro from '@/components/intro/Intro'
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Intro />
         <Nav />
+        <PageCurtain />
         <SmoothScroll>
           {children}
         </SmoothScroll>

@@ -15,7 +15,6 @@ function remap(v: number, a: number, b: number, c: number, d: number) {
   return lerp(c, d, clamp((v - a) / (b - a), 0, 1))
 }
 function ease(t: number) { return t * t * (3 - 2 * t) }
-function easeIn(t: number) { return t * t * t }
 function easeOut(t: number) { t = 1 - t; return 1 - t * t * t }
 
 const SKY: [number, string][] = [
@@ -69,11 +68,12 @@ const PIECES: Piece[] = [
 ]
 
 // Annotation labels: shown when building is assembled, positioned in world space
+// Annotation window sits in the gap between stage 2 (ends ~0.51) and stage 3 (starts ~0.74)
 const ANNOTATIONS = [
-  { title: 'Slate Screen',   sub: 'Bluestone 20mm',  wx:-1.88, wy: 0.9,  wz:-0.15, dx: 55, dy:-20, lo:0.30, hi:0.65 },
-  { title: 'Cast Roof Slab', sub: 'In-situ concrete', wx: 0.1,  wy: 0.95, wz: 0.8,  dx: 40, dy:-40, lo:0.44, hi:0.68 },
-  { title: 'Glazed Facade',  sub: 'Low-E triple unit', wx: 0.4,  wy: 0.5,  wz: 1.28, dx: 50, dy:  0, lo:0.46, hi:0.70 },
-  { title: 'Terrace Deck',   sub: 'Iroko hardwood',   wx: 1.85, wy:-0.20, wz: 0.6,  dx: 45, dy: 15, lo:0.32, hi:0.66 },
+  { title: 'Slate Screen',   sub: 'Pembrokeshire bluestone', wx:-1.88, wy: 0.9,  wz:-0.15, dx: 60, dy:-22, lo:0.52, hi:0.73 },
+  { title: 'Cast Roof Slab', sub: 'In-situ board-formed concrete', wx: 0.1,  wy: 0.96, wz: 0.8,  dx: 44, dy:-44, lo:0.54, hi:0.73 },
+  { title: 'Glazed Facade',  sub: 'Low-E triple-glazed unit',      wx: 0.4,  wy: 0.5,  wz: 1.30, dx: 52, dy:  2, lo:0.56, hi:0.73 },
+  { title: 'Iroko Terrace',  sub: '18m² cantilevered deck',        wx: 1.85, wy:-0.19, wz: 0.6,  dx: 46, dy: 16, lo:0.53, hi:0.73 },
 ]
 
 export default function ScrollHeroCanvas({ sectionRef }: Props) {
@@ -252,9 +252,10 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
         const el = labelRefs.current[i]
         if (!el) return
 
-        // Opacity window
-        const op = ease(clamp(remap(p, ann.lo, ann.lo + 0.06, 0, 1), 0, 1))
-                 * easeIn(clamp(remap(p, ann.hi - 0.06, ann.hi, 1, 0), 0, 1))
+        // Fade in over 0.05, hold, fade out over 0.05
+        const fadeIn  = ease(clamp((p - ann.lo) / 0.05, 0, 1))
+        const fadeOut = ease(clamp((ann.hi - p) / 0.05, 0, 1))
+        const op = fadeIn * fadeOut
         el.style.opacity = String(op)
 
         if (op < 0.01) return

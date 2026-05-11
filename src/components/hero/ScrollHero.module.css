@@ -2,7 +2,7 @@
 
 .section {
   position: relative;
-  height: 450vh;  /* scroll distance */
+  height: 500vh;
   will-change: transform;
 }
 
