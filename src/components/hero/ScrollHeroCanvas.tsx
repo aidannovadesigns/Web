@@ -9,142 +9,60 @@ interface Props {
   sectionRef: React.RefObject<HTMLElement>
 }
 
-const VERT = `
-void main() {
-  gl_Position = vec4(position, 1.0);
+function lerp(a: number, b: number, t: number) { return a + (b - a) * t }
+function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, v)) }
+function remap(v: number, a: number, b: number, c: number, d: number) {
+  return lerp(c, d, clamp((v - a) / (b - a), 0, 1))
 }
-`
+function ease(t: number) { return t * t * (3 - 2 * t) }
 
-const FRAG = `
-precision highp float;
+// Sky gradient keyframes: progress → hex colour
+const SKY: [number, string][] = [
+  [0.00, '#07080C'],
+  [0.18, '#0C1220'],
+  [0.30, '#18122A'],
+  [0.45, '#4A2010'],
+  [0.58, '#8A4018'],
+  [0.72, '#6B90A8'],
+  [1.00, '#96BCCC'],
+]
 
-uniform vec2  uRes;
-uniform float uTime;
-uniform float uProgress;
-
-// Brand palette
-#define COL_VOID   vec3(0.039, 0.039, 0.035)
-#define COL_NAVY   vec3(0.051, 0.122, 0.176)
-#define COL_SLATE  vec3(0.176, 0.290, 0.353)
-#define COL_SEA    vec3(0.212, 0.369, 0.431)
-#define COL_SAND   vec3(0.769, 0.584, 0.416)
-#define COL_GOLD   vec3(0.831, 0.659, 0.325)
-#define COL_PAPER  vec3(0.957, 0.945, 0.925)
-#define COL_WHITE  vec3(0.980, 0.976, 0.969)
-
-vec2 hash2(vec2 p) {
-  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-  return fract(sin(p) * 43758.5453);
-}
-
-float vnoise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  float a = dot(hash2(i),             f);
-  float b = dot(hash2(i + vec2(1,0)), f - vec2(1,0));
-  float c = dot(hash2(i + vec2(0,1)), f - vec2(0,1));
-  float d = dot(hash2(i + vec2(1,1)), f - vec2(1,1));
-  return mix(mix(a,b,u.x), mix(c,d,u.x), u.y) * 0.5 + 0.5;
+function lerpSky(p: number): THREE.Color {
+  let i = 0
+  while (i < SKY.length - 2 && SKY[i + 1][0] <= p) i++
+  const [p0, c0] = SKY[i]
+  const [p1, c1] = SKY[i + 1]
+  const t = ease(clamp((p - p0) / (p1 - p0), 0, 1))
+  return new THREE.Color().lerpColors(new THREE.Color(c0), new THREE.Color(c1), t)
 }
 
-float fbm(vec2 p) {
-  float v = 0.0; float a = 0.5;
-  for (int i = 0; i < 5; i++) {
-    v += a * vnoise(p);
-    p  = p * 2.03 + vec2(1.7, 9.2);
-    a *= 0.48;
-  }
-  return v;
+// Each building piece: assembled position + exploded offset + stagger delay
+type Piece = {
+  w: number; h: number; d: number
+  ax: number; ay: number; az: number
+  ex: number; ey: number; ez: number
+  mat: 'wall' | 'mid' | 'glass' | 'slate'
+  delay: number
 }
 
-// Soft noisy horizontal band
-float band(float y, float centre, float w, float noise) {
-  float edge = w * 0.5;
-  float lo = centre - edge + noise * 0.18;
-  float hi = centre + edge + noise * 0.14;
-  return smoothstep(lo - 0.04, lo + 0.04, y) *
-    (1.0 - smoothstep(hi - 0.04, hi + 0.04, y));
-}
-
-// White architecture void that expands in centre
-float buildingVoid(vec2 uv, float p) {
-  float bw = mix(0.0, 0.55, smoothstep(0.35, 0.90, p));
-  float bh = mix(0.0, 0.80, smoothstep(0.35, 0.90, p));
-  vec2  d  = abs(uv - vec2(0.50, 0.50)) - vec2(bw * 0.5, bh * 0.5);
-  float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
-  return 1.0 - smoothstep(-0.012, 0.012, dist);
-}
-
-void main() {
-  vec2 uv  = gl_FragCoord.xy / uRes;
-  vec2 nuv = uv * vec2(uRes.x / uRes.y, 1.0);
-
-  float p = uProgress;
-  float t = uTime;
-
-  float n1 = fbm(nuv * 1.8 + t * 0.025);
-  float n2 = fbm(nuv * 3.2 - t * 0.018 + vec2(4.3));
-  float n3 = fbm(nuv * 5.6 + t * 0.012 + vec2(8.7, 2.1));
-
-  float y = uv.y;
-
-  // Strata layers
-  float lOcean = band(y, mix(0.15, 0.08, p), mix(0.28, 0.18, p), n1 - 0.5);
-  float lSlate = band(y, mix(0.42, 0.30, p), mix(0.20, 0.14, p), n2 - 0.5);
-  float lSand  = band(y, mix(1.30, 0.52, p), mix(0.18, 0.16, p), n1 - 0.5);
-  float lSky   = band(y, mix(0.78, 0.72, p), mix(0.14, 0.26, p), n2 - 0.5);
-  float lGlow  = band(y, mix(0.62, 0.58, p), mix(0.06, 0.10, p), n3 - 0.5);
-
-  // Compose colour
-  vec3 col = COL_VOID;
-
-  float navyMix  = smoothstep(0.0,  0.15, p);
-  col = mix(col, COL_NAVY,  lOcean * navyMix);
-
-  float slateMix = smoothstep(0.10, 0.30, p);
-  col = mix(col, COL_SLATE, lSlate * slateMix);
-
-  float seaMix   = smoothstep(0.20, 0.45, p) * (1.0 - smoothstep(0.75, 0.92, p));
-  float seaBand  = smoothstep(0.1,  0.9, y + (n1 - 0.5) * 0.25);
-  col = mix(col, COL_SEA, seaBand * seaMix * 0.6);
-
-  float sandMix  = smoothstep(0.45, 0.68, p) * (1.0 - smoothstep(0.82, 0.95, p));
-  col = mix(col, COL_SAND, lSand * sandMix);
-
-  float glowMix  = smoothstep(0.40, 0.65, p) * (1.0 - smoothstep(0.78, 0.92, p));
-  col = mix(col, COL_GOLD, lGlow * glowMix * 1.2);
-
-  float skyMix   = smoothstep(0.70, 0.90, p);
-  col = mix(col, COL_PAPER, lSky * skyMix);
-
-  float brighten = smoothstep(0.78, 1.00, p);
-  col = mix(col, COL_WHITE, brighten * 0.60);
-
-  // Building void
-  float voidMask = buildingVoid(uv, p);
-  col = mix(col, COL_PAPER, voidMask);
-
-  // Vignette
-  float vigDist   = length((uv - 0.5) * vec2(1.0, 1.2));
-  float vig       = smoothstep(0.3, 0.85, vigDist);
-  float vigStr    = mix(0.55, 0.18, p);
-  col *= 1.0 - vig * vigStr;
-
-  // Film grain
-  float grain    = fract(sin(dot(gl_FragCoord.xy + t * 300.0,
-                                  vec2(127.1, 311.7))) * 43758.5453) - 0.5;
-  float grainStr = mix(0.055, 0.022, p);
-  col += grain * grainStr;
-
-  // Chromatic breathe
-  float breathe  = sin(t * 0.4 + n1 * 6.28) * 0.003 * (1.0 - p);
-  float rShift   = fbm(vec2(nuv.x + breathe, nuv.y) * 1.8 + t * 0.025);
-  col.r = mix(col.r, rShift * 0.3, 0.04 * (1.0 - p));
-
-  gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}
-`
+const PIECES: Piece[] = [
+  // base platform — drops from below
+  { w:5.4,  h:0.10, d:3.4,  ax: 0.0,  ay:-0.65, az: 0.0,  ex: 0.0,  ey:-2.8, ez: 0.0,  mat:'wall',  delay:0.00 },
+  // ground floor — rises from below
+  { w:3.4,  h:0.80, d:2.4,  ax: 0.2,  ay:-0.18, az: 0.0,  ex: 0.0,  ey:-2.0, ez: 0.0,  mat:'wall',  delay:0.03 },
+  // upper wing — floats left and high
+  { w:1.7,  h:1.30, d:1.9,  ax:-0.8,  ay: 0.27, az:-0.1,  ex:-1.2,  ey:-1.2, ez: 0.0,  mat:'mid',   delay:0.06 },
+  // glass facade — pushed forward
+  { w:1.4,  h:1.10, d:0.06, ax: 0.4,  ay: 0.16, az: 1.23, ex: 0.0,  ey: 0.0, ez: 2.2,  mat:'glass', delay:0.10 },
+  // roof slab — descends from high above
+  { w:2.7,  h:0.07, d:2.5,  ax: 0.1,  ay: 0.90, az: 0.0,  ex: 0.0,  ey: 2.8, ez: 0.0,  mat:'wall',  delay:0.05 },
+  // vertical accent — floats far left and up
+  { w:0.13, h:2.10, d:0.80, ax:-1.88, ay: 0.38, az:-0.15, ex:-2.0,  ey: 1.8, ez: 0.0,  mat:'slate', delay:0.09 },
+  // east terrace — slides in from right
+  { w:1.5,  h:0.06, d:2.0,  ax: 1.58, ay:-0.23, az: 0.1,  ex: 2.5,  ey:-1.4, ez: 0.0,  mat:'wall',  delay:0.02 },
+  // garden wall — slides in from right + below
+  { w:0.10, h:0.45, d:1.6,  ax: 2.38, ay:-0.43, az: 0.2,  ex: 2.8,  ey:-1.8, ez: 0.0,  mat:'slate', delay:0.13 },
+]
 
 export default function ScrollHeroCanvas({ sectionRef }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -155,61 +73,158 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false })
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
     renderer.setSize(canvas.offsetWidth, canvas.offsetHeight)
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 0.95
 
+    // Scene + camera
     const scene  = new THREE.Scene()
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    const camera = new THREE.PerspectiveCamera(44, canvas.offsetWidth / canvas.offsetHeight, 0.1, 100)
+    camera.position.set(4.0, 6.0, 4.0)
+    camera.lookAt(0, 0, 0)
 
-    const geo = new THREE.BufferGeometry()
-    const verts = new Float32Array([-1,-1,0, 3,-1,0, -1,3,0])
-    geo.setAttribute('position', new THREE.BufferAttribute(verts, 3))
+    scene.fog = new THREE.Fog(new THREE.Color('#07080C'), 5, 14)
 
-    const uniforms = {
-      uRes:      { value: new THREE.Vector2(canvas.offsetWidth, canvas.offsetHeight) },
-      uTime:     { value: 0 },
-      uProgress: { value: 0 },
+    // Lights — all start dim (night)
+    const ambient    = new THREE.AmbientLight('#3A4A60', 0.18)
+    const moonLight  = new THREE.DirectionalLight('#8899AA', 0.12)
+    moonLight.position.set(-3, 8, 1)
+
+    const dawnLight  = new THREE.DirectionalLight('#FFA876', 0)
+    dawnLight.position.set(5, 1.5, 3)
+    dawnLight.castShadow = true
+    dawnLight.shadow.mapSize.setScalar(1024)
+    dawnLight.shadow.camera.near = 0.5
+    dawnLight.shadow.camera.far  = 20
+    dawnLight.shadow.camera.left = dawnLight.shadow.camera.bottom = -5
+    dawnLight.shadow.camera.right = dawnLight.shadow.camera.top   = 5
+
+    const noonLight  = new THREE.DirectionalLight('#E8EEF2', 0)
+    noonLight.position.set(0.5, 8, 2)
+
+    const hemi = new THREE.HemisphereLight('#B8C8D4', '#D6D0C8', 0)
+    scene.add(ambient, moonLight, dawnLight, noonLight, hemi)
+
+    // Materials
+    const mats = {
+      wall:  new THREE.MeshStandardMaterial({ color: '#E8E4DD', roughness: 0.88, metalness: 0 }),
+      mid:   new THREE.MeshStandardMaterial({ color: '#CAC6BF', roughness: 0.80, metalness: 0 }),
+      glass: new THREE.MeshStandardMaterial({ color: '#3A5A6A', roughness: 0.08, metalness: 0.18, opacity: 0.48, transparent: true }),
+      slate: new THREE.MeshStandardMaterial({ color: '#2D4A5A', roughness: 0.62, metalness: 0.05 }),
     }
 
-    const mat = new THREE.ShaderMaterial({
-      vertexShader: VERT,
-      fragmentShader: FRAG,
-      uniforms,
-      depthTest: false,
-      depthWrite: false,
+    // Build meshes from piece definitions
+    const group   = new THREE.Group()
+    const meshes  = PIECES.map(p => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(p.w, p.h, p.d), mats[p.mat])
+      mesh.position.set(p.ax + p.ex, p.ay + p.ey, p.az + p.ez)
+      mesh.castShadow    = p.mat !== 'glass'
+      mesh.receiveShadow = p.mat !== 'glass'
+      group.add(mesh)
+      return mesh
     })
+    scene.add(group)
 
-    const mesh = new THREE.Mesh(geo, mat)
-    scene.add(mesh)
+    // Shadow catcher
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.ShadowMaterial({ opacity: 0.12 })
+    )
+    ground.rotation.x = -Math.PI / 2
+    ground.position.y = -0.72
+    ground.receiveShadow = true
+    scene.add(ground)
 
-    const proxy = { p: 0 }
+    // Scroll state
+    const raw = { p: 0 }
+    let smoothed = 0
+
     const st = ScrollTrigger.create({
       trigger: sectionRef.current,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: 1.8,
-      onUpdate(self) {
-        proxy.p = self.progress
-      },
+      onUpdate(self) { raw.p = self.progress },
     })
 
+    // Render loop
     let rafId: number
     const startTime = performance.now()
 
     function tick() {
       rafId = requestAnimationFrame(tick)
-      uniforms.uTime.value      = (performance.now() - startTime) / 1000
-      uniforms.uProgress.value += (proxy.p - uniforms.uProgress.value) * 0.06
+      const elapsed = (performance.now() - startTime) / 1000
+
+      // Smooth progress — feels like silk
+      smoothed += (raw.p - smoothed) * 0.055
+      const p = smoothed
+
+      const idleBreath = p < 0.02
+
+      // ── Piece assembly ────────────────────────────────────
+      // Assembly happens p 0.10 → 0.65 with per-piece stagger
+      PIECES.forEach((piece, i) => {
+        const lo = 0.12 + piece.delay
+        const hi = 0.58 + piece.delay * 0.6
+        const t  = ease(clamp((p - lo) / (hi - lo), 0, 1))
+        meshes[i].position.set(
+          piece.ax + piece.ex * (1 - t),
+          piece.ay + piece.ey * (1 - t),
+          piece.az + piece.ez * (1 - t),
+        )
+      })
+
+      // ── Group rotation (after assembly, follow Hero3D style) ─
+      const postT = ease(clamp((p - 0.62) / 0.38, 0, 1))
+      const idleY = idleBreath ? Math.sin(elapsed * 0.18) * 0.025 : 0
+      const idleX = idleBreath ? Math.sin(elapsed * 0.12) * 0.008 : 0
+      group.rotation.y = postT * -0.45 + idleY
+      group.rotation.x = postT *  0.04 + idleX
+
+      // ── Camera fly-down from aerial to eye-level ──────────
+      // Phase 1 (p 0→0.65): aerial → mid
+      const ph1 = ease(clamp(p / 0.65, 0, 1))
+      // Phase 2 (p 0.65→1): mid → eye level
+      const ph2 = ease(clamp((p - 0.65) / 0.35, 0, 1))
+
+      camera.position.x = lerp(lerp(4.0, 3.5, ph1), 3.8, ph2)
+      camera.position.y = lerp(lerp(6.0, 2.5, ph1), 1.3, ph2)
+      camera.position.z = lerp(lerp(4.0, 5.5, ph1), 5.8, ph2)
+
+      const lookY = lerp(lerp(0.0, 0.2, ph1), 0.2 - p * 0.1, ph2)
+      camera.lookAt(0, lookY, 0)
+
+      // ── Lighting ──────────────────────────────────────────
+      ambient.intensity    = remap(p, 0, 0.35, 0.18, 0.30)
+      moonLight.intensity  = remap(p, 0, 0.20, 0.12, 0)
+      dawnLight.intensity  = remap(p, 0.20, 0.55, 0, 2.0) * (1 - remap(p, 0.65, 1.0, 0, 0.5))
+      noonLight.intensity  = remap(p, 0.55, 1.00, 0, 2.4)
+      hemi.intensity       = remap(p, 0.30, 0.80, 0, 0.55)
+
+      // ── Sky ───────────────────────────────────────────────
+      const sky = lerpSky(p)
+      renderer.setClearColor(sky)
+      const fog = scene.fog as THREE.Fog
+      fog.color.copy(sky)
+      fog.near = lerp(5,  20, ease(clamp(p * 1.4, 0, 1)))
+      fog.far  = lerp(14, 40, ease(clamp(p * 1.4, 0, 1)))
+
       renderer.render(scene, camera)
     }
     tick()
 
+    // Resize
     const ro = new ResizeObserver(() => {
       const w = canvas.offsetWidth
       const h = canvas.offsetHeight
       renderer.setSize(w, h)
-      uniforms.uRes.value.set(w, h)
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
     })
     ro.observe(canvas)
 
@@ -217,9 +232,14 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
       cancelAnimationFrame(rafId)
       st.kill()
       ro.disconnect()
-      geo.dispose()
-      mat.dispose()
       renderer.dispose()
+      scene.traverse(obj => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose()
+          const ms = Array.isArray(obj.material) ? obj.material : [obj.material]
+          ms.forEach(m => m.dispose())
+        }
+      })
     }
   }, [sectionRef])
 

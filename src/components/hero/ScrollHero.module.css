@@ -214,7 +214,7 @@
   font-size: clamp(0.625rem, 0.85vw, 0.75rem);
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(28, 28, 26, 0.45);
+  color: rgba(28, 28, 26, 0.55);
 }
 
 .ctaGroup {

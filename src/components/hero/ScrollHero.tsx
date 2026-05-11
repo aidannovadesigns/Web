@@ -9,126 +9,121 @@ import s from './ScrollHero.module.css'
 
 const ScrollHeroCanvas = dynamic(() => import('./ScrollHeroCanvas'), { ssr: false })
 
-// Progress window for each stage: [in-start, in-end, out-start, out-end]
-// All values are 0→1 of total section scroll
+// Each stage: progress range when it's fully visible
 const STAGES = [
-  { el: 1, fadeIn: [0.00, 0.10], fadeOut: [0.20, 0.28] },
-  { el: 2, fadeIn: [0.25, 0.34], fadeOut: [0.52, 0.60] },
-  { el: 3, fadeIn: [0.57, 0.65], fadeOut: [0.80, 0.88] },
-  { el: 4, fadeIn: [0.85, 0.92], fadeOut: [1.00, 1.00] },
+  { fadeIn: [0.00, 0.10], hold: [0.10, 0.20], fadeOut: [0.20, 0.28] },
+  { fadeIn: [0.25, 0.34], hold: [0.34, 0.52], fadeOut: [0.52, 0.60] },
+  { fadeIn: [0.57, 0.65], hold: [0.65, 0.80], fadeOut: [0.80, 0.88] },
+  { fadeIn: [0.85, 0.92], hold: [0.92, 1.00], fadeOut: [1.00, 1.00] },
 ]
 
-// Progress bar widths and which stage is "active"
-function stageFromProgress(p: number): number {
-  if (p < 0.25) return 0
-  if (p < 0.57) return 1
-  if (p < 0.85) return 2
-  return 3
+function stageOpacity(p: number, stage: typeof STAGES[0]): number {
+  const { fadeIn, fadeOut } = stage
+  if (p < fadeIn[0]) return 0
+  if (p <= fadeIn[1]) return (p - fadeIn[0]) / (fadeIn[1] - fadeIn[0])
+  if (p < fadeOut[0]) return 1
+  if (p <= fadeOut[1]) return 1 - (p - fadeOut[0]) / (fadeOut[1] - fadeOut[0])
+  return 0
 }
 
 export default function ScrollHero() {
-  const sectionRef   = useRef<HTMLElement>(null)
-  const stageRefs    = useRef<(HTMLDivElement | null)[]>([])
-  const progressRefs = useRef<(HTMLDivElement | null)[]>([])
-  const fillRefs     = useRef<(HTMLSpanElement | null)[]>([])
+  const sectionRef    = useRef<HTMLElement>(null)
+  const stageRefs     = useRef<(HTMLDivElement | null)[]>([])
+  const progressItems = useRef<(HTMLDivElement | null)[]>([])
+  const progressFills = useRef<(HTMLSpanElement | null)[]>([])
   const scrollHintRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      // For reduced motion: just show stage 1 statically
-      if (stageRefs.current[0]) gsap.set(stageRefs.current[0], { opacity: 1 })
-      return
-    }
 
     const section = sectionRef.current
     if (!section) return
 
-    // Initialise all stages invisible
-    stageRefs.current.forEach(el => { if (el) gsap.set(el, { opacity: 0 }) })
+    // All stages invisible until scroll drives them
+    stageRefs.current.forEach(el => el && gsap.set(el, { opacity: 0 }))
 
-    // Proxy for smooth scrub
-    const proxy = { p: 0 }
+    const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    // Stage 1 animates in after intro completes
+    function revealStage1() {
+      if (isReducedMotion) {
+        const el = stageRefs.current[0]
+        if (el) gsap.set(el, { opacity: 1 })
+        return
+      }
+      gsap.to(stageRefs.current[0], {
+        opacity: 1,
+        duration: 1.0,
+        ease: 'power2.out',
+        delay: 0.1,
+      })
+    }
+
+    if (sessionStorage.getItem('meridian-intro-seen')) {
+      revealStage1()
+    } else {
+      window.addEventListener('meridian:intro-complete', revealStage1, { once: true })
+    }
+
+    if (isReducedMotion) return
 
     const st = ScrollTrigger.create({
       trigger: section,
       start: 'top top',
       end: 'bottom bottom',
-      scrub: false,
       onUpdate(self) {
-        proxy.p = self.progress
-        const p = proxy.p
+        const p = self.progress
 
         // Stage opacities
-        STAGES.forEach(({ el, fadeIn, fadeOut }, i) => {
-          const ref = stageRefs.current[i]
-          if (!ref) return
-          let opacity = 0
-          if (p >= fadeIn[0] && p <= fadeIn[1]) {
-            opacity = (p - fadeIn[0]) / (fadeIn[1] - fadeIn[0])
-          } else if (p > fadeIn[1] && p < fadeOut[0]) {
-            opacity = 1
-          } else if (p >= fadeOut[0] && p <= fadeOut[1]) {
-            opacity = 1 - (p - fadeOut[0]) / (fadeOut[1] - fadeOut[0])
-          }
-          ref.style.opacity = String(Math.max(0, Math.min(1, opacity)))
-          void el
+        stageRefs.current.forEach((el, i) => {
+          if (!el) return
+          // Stage 1 is handled separately above; once scrolling starts, hand it to the
+          // normal scroll-driven opacity calculation
+          const op = stageOpacity(p, STAGES[i])
+          // For stage 1: only override once we've scrolled past 0.02 (avoid flash)
+          if (i === 0 && p < 0.02) return
+          el.style.opacity = String(op)
         })
 
-        // Scroll hint fades out after first stage
+        // Scroll hint fades quickly
         if (scrollHintRef.current) {
-          scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p * 8))
+          scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p * 12))
         }
 
         // Progress track
-        const activeStage = stageFromProgress(p)
-        progressRefs.current.forEach((el, i) => {
-          if (!el) return
-          if (i === activeStage) {
-            el.classList.add(s['is-active'])
-          } else {
-            el.classList.remove(s['is-active'])
-          }
-        })
-
-        // Fill bars
         const stageStarts = [0, 0.25, 0.57, 0.85]
         const stageEnds   = [0.25, 0.57, 0.85, 1.00]
-        fillRefs.current.forEach((el, i) => {
+        progressItems.current.forEach((el, i) => {
           if (!el) return
-          const lo = stageStarts[i]
-          const hi = stageEnds[i]
-          const fill = Math.max(0, Math.min(1, (p - lo) / (hi - lo)))
+          const active = p >= stageStarts[i] && p < stageEnds[i]
+          el.classList.toggle(s['is-active'], active)
+        })
+        progressFills.current.forEach((el, i) => {
+          if (!el) return
+          const fill = Math.max(0, Math.min(1,
+            (p - stageStarts[i]) / (stageEnds[i] - stageStarts[i])
+          ))
           el.style.width = `${fill * 100}%`
         })
       },
     })
 
-    // Animate first stage in on load
-    gsap.to(stageRefs.current[0], {
-      opacity: 1,
-      duration: 1.2,
-      ease: 'power2.out',
-      delay: 0.3,
-    })
-
-    return () => st.kill()
+    return () => {
+      st.kill()
+      window.removeEventListener('meridian:intro-complete', revealStage1)
+    }
   }, [])
 
   return (
     <section ref={sectionRef} className={s.section}>
       <div className={s.sticky}>
 
-        {/* Full-viewport WebGL canvas */}
         <div className={s.canvasWrap}>
           <ScrollHeroCanvas sectionRef={sectionRef as React.RefObject<HTMLElement>} />
         </div>
 
-        {/* ── Stage 1: Brand identity (scroll 0–25%) ──────── */}
-        <div
-          ref={el => { stageRefs.current[0] = el }}
-          className={`${s.stage} ${s.stage1}`}
-        >
+        {/* Stage 1 — exploded building in night sky */}
+        <div ref={el => { stageRefs.current[0] = el }} className={`${s.stage} ${s.stage1}`}>
           <div className={s.stageInner}>
             <span className={s.eyebrow}>Coastal Architecture Studio — Est. 2010</span>
             <div className={s.monogram} aria-hidden>
@@ -155,28 +150,20 @@ export default function ScrollHero() {
           </div>
         </div>
 
-        {/* ── Stage 2: The statement (scroll 25–57%) ──────── */}
-        <div
-          ref={el => { stageRefs.current[1] = el }}
-          className={`${s.stage} ${s.stage2}`}
-        >
+        {/* Stage 2 — building assembles, dawn rising */}
+        <div ref={el => { stageRefs.current[1] = el }} className={`${s.stage} ${s.stage2}`}>
           <div className={s.stageInner}>
             <h2 className={s.bigStatement}>
               <span className={s.statLine}>Architecture</span>
               <span className={s.statLine}>for the</span>
               <span className={s.statLineAccent}>edge.</span>
             </h2>
-            <p className={s.stageCaption}>
-              Where land meets sea, structure meets sky.
-            </p>
+            <p className={s.stageCaption}>Where land meets sea, structure meets sky.</p>
           </div>
         </div>
 
-        {/* ── Stage 3: Credentials (scroll 57–85%) ────────── */}
-        <div
-          ref={el => { stageRefs.current[2] = el }}
-          className={`${s.stage} ${s.stage3}`}
-        >
+        {/* Stage 3 — golden hour, building complete */}
+        <div ref={el => { stageRefs.current[2] = el }} className={`${s.stage} ${s.stage3}`}>
           <div className={s.stageInner}>
             <div className={s.stats}>
               <div className={s.stat}>
@@ -201,11 +188,8 @@ export default function ScrollHero() {
           </div>
         </div>
 
-        {/* ── Stage 4: CTA (scroll 85–100%) ───────────────── */}
-        <div
-          ref={el => { stageRefs.current[3] = el }}
-          className={`${s.stage} ${s.stage4}`}
-        >
+        {/* Stage 4 — coastal morning, CTA */}
+        <div ref={el => { stageRefs.current[3] = el }} className={`${s.stage} ${s.stage4}`}>
           <div className={s.stageInner}>
             <p className={s.ctaLabel}>Ready to begin?</p>
             <div className={s.ctaGroup}>
@@ -232,17 +216,10 @@ export default function ScrollHero() {
         {/* Progress track */}
         <div className={s.progressTrack} aria-hidden>
           {['01','02','03','04'].map((n, i) => (
-            <div
-              key={n}
-              ref={el => { progressRefs.current[i] = el }}
-              className={s.progressItem}
-            >
+            <div key={n} ref={el => { progressItems.current[i] = el }} className={s.progressItem}>
               <span className={s.progressNum}>{n}</span>
               <span className={s.progressBar}>
-                <span
-                  ref={el => { fillRefs.current[i] = el }}
-                  className={s.progressFill}
-                />
+                <span ref={el => { progressFills.current[i] = el }} className={s.progressFill} />
               </span>
             </div>
           ))}

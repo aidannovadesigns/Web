@@ -91,39 +91,32 @@ export default function Intro() {
     }, 1.8)
 
     // 2.6s — hold
-    tl.to({}, { duration: 0.6 }, 2.5)
+    tl.to({}, { duration: 0.5 }, 2.5)
 
-    // 3.1s — bg cross-fades black → off-white
-    tl.to(bgRef.current, {
-      opacity: 1,
-      duration: 1.0,
-      ease: 'power2.inOut',
-    }, 3.1)
-
-    // 3.4s — 3D scene fades via shared ref (IntroScene reads it on each frame)
+    // 3.0s — scene fades
     tl.to(sceneOpacity, {
       current: 0,
-      duration: 0.8,
+      duration: 0.6,
       ease: 'power1.inOut',
-    }, 3.4)
+    }, 3.0)
 
-    // 3.6s — mark and wordmark exit: scale down toward nav
+    // 3.0s — mark and wordmark exit toward nav
     tl.to([mark, wm], {
       opacity: 0,
-      scale: 0.6,
+      scale: 0.55,
       transformOrigin: 'center center',
-      duration: 0.55,
+      duration: 0.5,
       ease: 'cubic-bezier(0.77, 0, 0.175, 1)',
-    }, 3.6)
+    }, 3.0)
 
-    // 3.9s — full overlay out
+    // 3.4s — full overlay fades, revealing hero canvas underneath
     tl.to(introRef.current, {
       opacity: 0,
-      duration: 0.45,
+      duration: 0.5,
       ease: 'power1.inOut',
       onStart: () => setPhase('exiting'),
       onComplete: () => setPhase('done'),
-    }, 3.9)
+    }, 3.4)
 
     return () => { tl.kill() }
   }, [])

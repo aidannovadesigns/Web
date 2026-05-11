@@ -142,7 +142,7 @@
   position: fixed;
   inset: 0;
   z-index: 199;
-  background: var(--color-bg, #F4F1EC);
+  background: #07080C;
   opacity: 0;
   pointer-events: none;
   will-change: opacity;
