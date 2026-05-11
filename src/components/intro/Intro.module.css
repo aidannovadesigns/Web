@@ -1,0 +1,97 @@
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--color-black, #0A0A09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Pointer events off once animation starts exiting */
+}
+
+.intro.exiting {
+  pointer-events: none;
+}
+
+.intro.done {
+  display: none;
+}
+
+/* The mark container — scales down to nav position on exit */
+.markWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  will-change: transform, opacity;
+}
+
+/* Frame monogram SVG — strokes draw on */
+.mark {
+  width: clamp(80px, 15vw, 140px);
+  height: clamp(80px, 15vw, 140px);
+  color: #F4F1EC;
+}
+
+/* Individual stroke paths get stroke-dasharray set via JS */
+.mark path,
+.mark line,
+.mark rect,
+.mark polyline {
+  fill: none;
+  stroke: currentColor;
+}
+
+/* Wordmark beneath, fades in after mark draws */
+.wordmark {
+  width: clamp(160px, 30vw, 280px);
+  height: auto;
+  color: #F4F1EC;
+  opacity: 0;
+  transform: translateY(8px);
+  will-change: opacity, transform;
+}
+
+/* Background overlay that fades from black to bg colour */
+.bgFade {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: var(--color-bg);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* Skip button */
+.skip {
+  position: fixed;
+  bottom: 40px;
+  right: clamp(24px, 5vw, 80px);
+  z-index: 201;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s cubic-bezier(0, 0.55, 0.45, 1);
+  opacity: 0;
+  animation: fadeInSkip 0.5s 1s forwards;
+}
+
+.skip:hover {
+  color: rgba(244, 241, 236, 0.8);
+}
+
+@keyframes fadeInSkip {
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none; }
+  .bgFade { display: none; }
+  .skip { display: none; }
+}

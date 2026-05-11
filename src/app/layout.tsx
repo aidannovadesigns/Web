@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { Fraunces, Inter } from 'next/font/google'
 import './globals.css'
+import SmoothScroll from '@/components/layout/SmoothScroll'
+import Cursor from '@/components/cursor/Cursor'
+import Nav from '@/components/nav/Nav'
+import Intro from '@/components/intro/Intro'
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -28,7 +32,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Intro />
+        <Nav />
+        <SmoothScroll>
+          {children}
+        </SmoothScroll>
+        <Cursor />
+      </body>
     </html>
   )
 }

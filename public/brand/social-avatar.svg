@@ -1,12 +1,21 @@
-<!-- Square social avatar — monogram on off-white, generous margin -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
   <rect width="400" height="400" fill="#F4F1EC"/>
-  <g stroke="#1C1C1A" stroke-width="13" stroke-linecap="square" stroke-linejoin="miter">
-    <line x1="68" y1="332" x2="68" y2="68"/>
-    <line x1="68" y1="68" x2="200" y2="198"/>
-    <line x1="332" y1="68" x2="200" y2="198"/>
-    <line x1="332" y1="68" x2="332" y2="332"/>
-    <line x1="68" y1="198" x2="332" y2="198"/>
-    <line x1="68" y1="332" x2="332" y2="332"/>
+  <!-- Outer frame -->
+  <rect x="16" y="16" width="368" height="368" stroke="#1C1C1A" stroke-width="8"/>
+  <!-- Blueprint grid -->
+  <g stroke="#1C1C1A" stroke-width="1.5" stroke-opacity="0.2">
+    <line x1="16" y1="139" x2="384" y2="139"/>
+    <line x1="16" y1="200" x2="384" y2="200"/>
+    <line x1="16" y1="261" x2="384" y2="261"/>
+    <line x1="139" y1="16" x2="139" y2="384"/>
+    <line x1="200" y1="16" x2="200" y2="384"/>
+    <line x1="261" y1="16" x2="261" y2="384"/>
+  </g>
+  <!-- M form -->
+  <g stroke="#1C1C1A" stroke-width="16" stroke-linecap="square">
+    <line x1="80"  y1="320" x2="80"  y2="80"/>
+    <line x1="80"  y1="80"  x2="200" y2="216"/>
+    <line x1="320" y1="80"  x2="200" y2="216"/>
+    <line x1="320" y1="80"  x2="320" y2="320"/>
   </g>
 </svg>
