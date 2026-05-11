@@ -1,97 +1,154 @@
+/* ─── Overlay ─────────────────────────────────────────── */
 .intro {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: var(--color-black, #0A0A09);
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Pointer events off once animation starts exiting */
+  overflow: hidden;
+  /* Radial dark bg — centre slightly lighter to give depth */
+  background: radial-gradient(ellipse at 50% 45%, #1a1a18 0%, #0A0A09 70%);
 }
 
-.intro.exiting {
+.intro.exiting { pointer-events: none; }
+.intro.done    { display: none; }
+
+/* ─── Grain texture overlay ───────────────────────────── */
+.intro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* SVG-based noise — no image request, CPU-generated */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.6;
   pointer-events: none;
+  z-index: 1;
 }
 
-.intro.done {
-  display: none;
+/* ─── 3D canvas container ─────────────────────────────── */
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
-/* The mark container — scales down to nav position on exit */
+/* ─── Brand mark overlay ──────────────────────────────── */
 .markWrap {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 32px;
+  gap: 28px;
   will-change: transform, opacity;
 }
 
-/* Frame monogram SVG — strokes draw on */
+/* Monogram SVG — strokes animate via GSAP strokeDashoffset */
 .mark {
-  width: clamp(80px, 15vw, 140px);
-  height: clamp(80px, 15vw, 140px);
+  width: clamp(72px, 12vw, 120px);
+  height: clamp(72px, 12vw, 120px);
   color: #F4F1EC;
 }
 
-/* Individual stroke paths get stroke-dasharray set via JS */
-.mark path,
-.mark line,
-.mark rect,
-.mark polyline {
-  fill: none;
-  stroke: currentColor;
-}
-
-/* Wordmark beneath, fades in after mark draws */
+/* Wordmark */
 .wordmark {
-  width: clamp(160px, 30vw, 280px);
+  width: clamp(140px, 24vw, 240px);
   height: auto;
   color: #F4F1EC;
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
   will-change: opacity, transform;
 }
 
-/* Background overlay that fades from black to bg colour */
-.bgFade {
-  position: fixed;
-  inset: 0;
-  z-index: 199;
-  background: var(--color-bg);
-  opacity: 0;
-  pointer-events: none;
-  will-change: opacity;
+/* ─── Progress line ───────────────────────────────────── */
+.progressWrap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 1px;
+  background: rgba(244, 241, 236, 0.06);
+  overflow: hidden;
 }
 
-/* Skip button */
+.progressBar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, var(--color-slate, #2D4A5A) 0%, rgba(244,241,236,0.5) 100%);
+  transform-origin: left center;
+  transform: scaleX(0);
+  will-change: transform;
+}
+
+/* ─── Stage label ─────────────────────────────────────── */
+.stageLabel {
+  position: absolute;
+  bottom: 24px;
+  left: clamp(24px, 5vw, 80px);
+  z-index: 3;
+  font-family: var(--font-sans, system-ui);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.25);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.stageLabel.visible { opacity: 1; }
+
+/* ─── Corner coordinates (architectural detail) ──────── */
+.coordTL, .coordBR {
+  position: absolute;
+  z-index: 3;
+  font-family: var(--font-sans, monospace);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  color: rgba(244, 241, 236, 0.12);
+  font-feature-settings: 'tnum';
+}
+.coordTL { top: 24px;    left:  clamp(24px, 5vw, 80px); }
+.coordBR { bottom: 32px; right: clamp(24px, 5vw, 80px); }
+
+/* ─── Skip button ─────────────────────────────────────── */
 .skip {
   position: fixed;
   bottom: 40px;
   right: clamp(24px, 5vw, 80px);
   z-index: 201;
-  font-family: var(--font-sans);
-  font-size: 0.6875rem;
-  letter-spacing: 0.15em;
+  font-family: var(--font-sans, system-ui);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(244, 241, 236, 0.4);
+  color: rgba(244, 241, 236, 0.3);
   background: none;
   border: none;
   cursor: pointer;
-  transition: color 0.3s cubic-bezier(0, 0.55, 0.45, 1);
+  padding: 8px 0;
+  transition: color 0.3s ease;
   opacity: 0;
-  animation: fadeInSkip 0.5s 1s forwards;
+  animation: fadeSkip 0.5s 1.2s forwards;
 }
+.skip:hover { color: rgba(244, 241, 236, 0.7); }
 
-.skip:hover {
-  color: rgba(244, 241, 236, 0.8);
-}
-
-@keyframes fadeInSkip {
+@keyframes fadeSkip {
   to { opacity: 1; }
 }
 
+/* ─── Background cross-fade layer ────────────────────── */
+.bgFade {
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+  background: var(--color-bg, #F4F1EC);
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* ─── Reduced motion: skip entirely ──────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .intro { display: none; }
-  .bgFade { display: none; }
-  .skip { display: none; }
+  .intro, .bgFade, .skip { display: none; }
 }
