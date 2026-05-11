@@ -130,6 +130,15 @@
 }
 
 /* ── Stage 3: Stats ──────────────────────────────────────────────────────── */
+.stage3Label {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244,241,236,0.35);
+  margin-bottom: 4px;
+}
+
 .stage3 {
   align-items: flex-start;
   padding: 0 clamp(32px, 7vw, 120px);

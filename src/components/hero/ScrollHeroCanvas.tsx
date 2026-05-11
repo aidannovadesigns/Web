@@ -15,65 +15,80 @@ function remap(v: number, a: number, b: number, c: number, d: number) {
   return lerp(c, d, clamp((v - a) / (b - a), 0, 1))
 }
 function ease(t: number) { return t * t * (3 - 2 * t) }
+function easeIn(t: number) { return t * t * t }
+function easeOut(t: number) { t = 1 - t; return 1 - t * t * t }
 
-// Sky gradient keyframes: progress → hex colour
 const SKY: [number, string][] = [
-  [0.00, '#07080C'],
-  [0.18, '#0C1220'],
-  [0.30, '#18122A'],
-  [0.45, '#4A2010'],
-  [0.58, '#8A4018'],
-  [0.72, '#6B90A8'],
-  [1.00, '#96BCCC'],
+  [0.00, '#06070B'],
+  [0.15, '#0B1020'],
+  [0.28, '#16102A'],
+  [0.42, '#451808'],
+  [0.56, '#904018'],
+  [0.68, '#5A8498'],
+  [0.82, '#7BA8BC'],
+  [1.00, '#94BECE'],
 ]
 
 function lerpSky(p: number): THREE.Color {
   let i = 0
   while (i < SKY.length - 2 && SKY[i + 1][0] <= p) i++
-  const [p0, c0] = SKY[i]
-  const [p1, c1] = SKY[i + 1]
-  const t = ease(clamp((p - p0) / (p1 - p0), 0, 1))
-  return new THREE.Color().lerpColors(new THREE.Color(c0), new THREE.Color(c1), t)
+  const t = ease(clamp((p - SKY[i][0]) / (SKY[i + 1][0] - SKY[i][0]), 0, 1))
+  return new THREE.Color().lerpColors(new THREE.Color(SKY[i][1]), new THREE.Color(SKY[i + 1][1]), t)
 }
 
-// Each building piece: assembled position + exploded offset + stagger delay
+// Building pieces with batched assembly timing
+// bLo/bHi = progress window when this piece assembles (flies to position)
 type Piece = {
   w: number; h: number; d: number
-  ax: number; ay: number; az: number
-  ex: number; ey: number; ez: number
+  ax: number; ay: number; az: number  // assembled position
+  ex: number; ey: number; ez: number  // exploded offset (added to assembled)
   mat: 'wall' | 'mid' | 'glass' | 'slate'
-  delay: number
+  bLo: number; bHi: number            // batch assembly window
 }
 
 const PIECES: Piece[] = [
-  // base platform — drops from below
-  { w:5.4,  h:0.10, d:3.4,  ax: 0.0,  ay:-0.65, az: 0.0,  ex: 0.0,  ey:-2.8, ez: 0.0,  mat:'wall',  delay:0.00 },
-  // ground floor — rises from below
-  { w:3.4,  h:0.80, d:2.4,  ax: 0.2,  ay:-0.18, az: 0.0,  ex: 0.0,  ey:-2.0, ez: 0.0,  mat:'wall',  delay:0.03 },
-  // upper wing — floats left and high
-  { w:1.7,  h:1.30, d:1.9,  ax:-0.8,  ay: 0.27, az:-0.1,  ex:-1.2,  ey:-1.2, ez: 0.0,  mat:'mid',   delay:0.06 },
-  // glass facade — pushed forward
-  { w:1.4,  h:1.10, d:0.06, ax: 0.4,  ay: 0.16, az: 1.23, ex: 0.0,  ey: 0.0, ez: 2.2,  mat:'glass', delay:0.10 },
-  // roof slab — descends from high above
-  { w:2.7,  h:0.07, d:2.5,  ax: 0.1,  ay: 0.90, az: 0.0,  ex: 0.0,  ey: 2.8, ez: 0.0,  mat:'wall',  delay:0.05 },
-  // vertical accent — floats far left and up
-  { w:0.13, h:2.10, d:0.80, ax:-1.88, ay: 0.38, az:-0.15, ex:-2.0,  ey: 1.8, ez: 0.0,  mat:'slate', delay:0.09 },
-  // east terrace — slides in from right
-  { w:1.5,  h:0.06, d:2.0,  ax: 1.58, ay:-0.23, az: 0.1,  ex: 2.5,  ey:-1.4, ez: 0.0,  mat:'wall',  delay:0.02 },
-  // garden wall — slides in from right + below
-  { w:0.10, h:0.45, d:1.6,  ax: 2.38, ay:-0.43, az: 0.2,  ex: 2.8,  ey:-1.8, ez: 0.0,  mat:'slate', delay:0.13 },
+  // ── BATCH A: Foundation (p 0.10–0.30) ──────────────────────────────────
+  { w:5.4,  h:0.10, d:3.4,  ax: 0.0,  ay:-0.65, az: 0.0,  ex: 0.3,  ey:-3.0, ez: 0.2,  mat:'wall',  bLo:0.10, bHi:0.28 },
+  { w:3.4,  h:0.80, d:2.4,  ax: 0.2,  ay:-0.18, az: 0.0,  ex: 0.0,  ey:-2.2, ez: 0.0,  mat:'wall',  bLo:0.13, bHi:0.31 },
+  { w:1.5,  h:0.06, d:2.0,  ax: 1.58, ay:-0.23, az: 0.1,  ex: 2.8,  ey:-1.6, ez: 0.5,  mat:'wall',  bLo:0.11, bHi:0.29 },
+  { w:0.10, h:0.45, d:1.6,  ax: 2.38, ay:-0.43, az: 0.2,  ex: 3.2,  ey:-1.8, ez: 0.5,  mat:'slate', bLo:0.12, bHi:0.30 },
+
+  // ── BATCH B: Structure walls (p 0.27–0.50) ─────────────────────────────
+  { w:1.7,  h:1.30, d:1.9,  ax:-0.8,  ay: 0.27, az:-0.1,  ex:-2.0,  ey:-1.4, ez:-0.5, mat:'mid',   bLo:0.27, bHi:0.46 },
+  { w:0.13, h:2.10, d:0.80, ax:-1.88, ay: 0.38, az:-0.15, ex:-3.0,  ey: 1.8, ez:-0.5, mat:'slate', bLo:0.29, bHi:0.48 },
+  // Interior floor line (thin slab inside main body)
+  { w:3.2,  h:0.04, d:2.2,  ax: 0.2,  ay: 0.22, az: 0.0,  ex: 0.0,  ey:-1.0, ez: 0.0,  mat:'mid',   bLo:0.28, bHi:0.47 },
+
+  // ── BATCH C: Envelope & details (p 0.42–0.62) ──────────────────────────
+  { w:2.7,  h:0.07, d:2.5,  ax: 0.1,  ay: 0.90, az: 0.0,  ex: 0.5,  ey: 3.2, ez: 0.0,  mat:'wall',  bLo:0.42, bHi:0.60 },
+  { w:1.4,  h:1.10, d:0.06, ax: 0.4,  ay: 0.16, az: 1.23, ex: 0.0,  ey:-0.5, ez: 2.8,  mat:'glass', bLo:0.44, bHi:0.62 },
+  // Glass infill (upper wing side)
+  { w:1.5,  h:1.20, d:0.06, ax:-0.8,  ay: 0.24, az: 0.82, ex:-0.5,  ey:-0.5, ez: 2.5,  mat:'glass', bLo:0.46, bHi:0.63 },
+  // Roof parapet front
+  { w:2.8,  h:0.12, d:0.08, ax: 0.1,  ay: 0.94, az: 1.27, ex: 0.0,  ey: 3.5, ez: 2.0,  mat:'wall',  bLo:0.43, bHi:0.61 },
+]
+
+// Annotation labels: shown when building is assembled, positioned in world space
+const ANNOTATIONS = [
+  { title: 'Slate Screen',   sub: 'Bluestone 20mm',  wx:-1.88, wy: 0.9,  wz:-0.15, dx: 55, dy:-20, lo:0.30, hi:0.65 },
+  { title: 'Cast Roof Slab', sub: 'In-situ concrete', wx: 0.1,  wy: 0.95, wz: 0.8,  dx: 40, dy:-40, lo:0.44, hi:0.68 },
+  { title: 'Glazed Facade',  sub: 'Low-E triple unit', wx: 0.4,  wy: 0.5,  wz: 1.28, dx: 50, dy:  0, lo:0.46, hi:0.70 },
+  { title: 'Terrace Deck',   sub: 'Iroko hardwood',   wx: 1.85, wy:-0.20, wz: 0.6,  dx: 45, dy: 15, lo:0.32, hi:0.66 },
 ]
 
 export default function ScrollHeroCanvas({ sectionRef }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasRef   = useRef<HTMLCanvasElement>(null)
+  const wrapRef     = useRef<HTMLDivElement>(null)
+  const labelRefs   = useRef<(HTMLDivElement | null)[]>([])
+  const lineSvgRef  = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger)
-
     const canvas = canvasRef.current
-    if (!canvas) return
+    const wrap   = wrapRef.current
+    if (!canvas || !wrap) return
 
-    // Renderer
+    // ── Renderer ─────────────────────────────────────────────────────────
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
     renderer.setSize(canvas.offsetWidth, canvas.offsetHeight)
@@ -83,19 +98,17 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 0.95
 
-    // Scene + camera
+    // ── Scene + Camera ────────────────────────────────────────────────────
     const scene  = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(44, canvas.offsetWidth / canvas.offsetHeight, 0.1, 100)
     camera.position.set(4.0, 6.0, 4.0)
     camera.lookAt(0, 0, 0)
+    scene.fog = new THREE.Fog(new THREE.Color('#06070B'), 5, 14)
 
-    scene.fog = new THREE.Fog(new THREE.Color('#07080C'), 5, 14)
-
-    // Lights — all start dim (night)
-    const ambient    = new THREE.AmbientLight('#3A4A60', 0.18)
-    const moonLight  = new THREE.DirectionalLight('#8899AA', 0.12)
+    // ── Lights ────────────────────────────────────────────────────────────
+    const ambient    = new THREE.AmbientLight('#3A4A60', 0.20)
+    const moonLight  = new THREE.DirectionalLight('#8899BB', 0.14)
     moonLight.position.set(-3, 8, 1)
-
     const dawnLight  = new THREE.DirectionalLight('#FFA876', 0)
     dawnLight.position.set(5, 1.5, 3)
     dawnLight.castShadow = true
@@ -104,44 +117,49 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
     dawnLight.shadow.camera.far  = 20
     dawnLight.shadow.camera.left = dawnLight.shadow.camera.bottom = -5
     dawnLight.shadow.camera.right = dawnLight.shadow.camera.top   = 5
-
     const noonLight  = new THREE.DirectionalLight('#E8EEF2', 0)
     noonLight.position.set(0.5, 8, 2)
-
     const hemi = new THREE.HemisphereLight('#B8C8D4', '#D6D0C8', 0)
     scene.add(ambient, moonLight, dawnLight, noonLight, hemi)
 
-    // Materials
+    // ── Materials ─────────────────────────────────────────────────────────
     const mats = {
-      wall:  new THREE.MeshStandardMaterial({ color: '#E8E4DD', roughness: 0.88, metalness: 0 }),
-      mid:   new THREE.MeshStandardMaterial({ color: '#CAC6BF', roughness: 0.80, metalness: 0 }),
-      glass: new THREE.MeshStandardMaterial({ color: '#3A5A6A', roughness: 0.08, metalness: 0.18, opacity: 0.48, transparent: true }),
-      slate: new THREE.MeshStandardMaterial({ color: '#2D4A5A', roughness: 0.62, metalness: 0.05 }),
+      wall:  new THREE.MeshStandardMaterial({ color: '#E8E4DD', roughness: 0.88, metalness: 0, transparent: true, opacity: 0 }),
+      mid:   new THREE.MeshStandardMaterial({ color: '#CAC6BF', roughness: 0.80, metalness: 0, transparent: true, opacity: 0 }),
+      glass: new THREE.MeshStandardMaterial({ color: '#3A5A6A', roughness: 0.08, metalness: 0.18, transparent: true, opacity: 0 }),
+      slate: new THREE.MeshStandardMaterial({ color: '#2D4A5A', roughness: 0.62, metalness: 0.05, transparent: true, opacity: 0 }),
     }
+    const wireMat = new THREE.LineBasicMaterial({ color: '#8899BB', transparent: true, opacity: 0.38 })
 
-    // Build meshes from piece definitions
-    const group   = new THREE.Group()
-    const meshes  = PIECES.map(p => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(p.w, p.h, p.d), mats[p.mat])
+    // ── Build meshes + wireframes ─────────────────────────────────────────
+    const group     = new THREE.Group()
+    const meshes:      THREE.Mesh[]         = []
+    const wireframes:  THREE.LineSegments[] = []
+
+    PIECES.forEach(p => {
+      const geo   = new THREE.BoxGeometry(p.w, p.h, p.d)
+      const mesh  = new THREE.Mesh(geo, mats[p.mat])
       mesh.position.set(p.ax + p.ex, p.ay + p.ey, p.az + p.ez)
       mesh.castShadow    = p.mat !== 'glass'
       mesh.receiveShadow = p.mat !== 'glass'
       group.add(mesh)
-      return mesh
+      meshes.push(mesh)
+
+      const wf = new THREE.LineSegments(new THREE.EdgesGeometry(geo), wireMat)
+      wf.position.copy(mesh.position)
+      group.add(wf)
+      wireframes.push(wf)
     })
     scene.add(group)
 
     // Shadow catcher
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(20, 20),
-      new THREE.ShadowMaterial({ opacity: 0.12 })
-    )
-    ground.rotation.x = -Math.PI / 2
-    ground.position.y = -0.72
-    ground.receiveShadow = true
-    scene.add(ground)
+    const shadowGround = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.ShadowMaterial({ opacity: 0.12 }))
+    shadowGround.rotation.x = -Math.PI / 2
+    shadowGround.position.y = -0.72
+    shadowGround.receiveShadow = true
+    scene.add(shadowGround)
 
-    // Scroll state
+    // ── Scroll state ──────────────────────────────────────────────────────
     const raw = { p: 0 }
     let smoothed = 0
 
@@ -152,73 +170,120 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
       onUpdate(self) { raw.p = self.progress },
     })
 
-    // Render loop
+    // ── Render + update loop ──────────────────────────────────────────────
     let rafId: number
     const startTime = performance.now()
+    const scrPos = new THREE.Vector3()
 
     function tick() {
       rafId = requestAnimationFrame(tick)
       const elapsed = (performance.now() - startTime) / 1000
-
-      // Smooth progress — feels like silk
       smoothed += (raw.p - smoothed) * 0.055
       const p = smoothed
 
-      const idleBreath = p < 0.02
-
-      // ── Piece assembly ────────────────────────────────────
-      // Assembly happens p 0.10 → 0.65 with per-piece stagger
+      // ── Piece assembly ──────────────────────────────────────────────────
       PIECES.forEach((piece, i) => {
-        const lo = 0.12 + piece.delay
-        const hi = 0.58 + piece.delay * 0.6
-        const t  = ease(clamp((p - lo) / (hi - lo), 0, 1))
+        const t = ease(clamp((p - piece.bLo) / (piece.bHi - piece.bLo), 0, 1))
         meshes[i].position.set(
           piece.ax + piece.ex * (1 - t),
           piece.ay + piece.ey * (1 - t),
           piece.az + piece.ez * (1 - t),
         )
+        wireframes[i].position.copy(meshes[i].position)
       })
 
-      // ── Group rotation (after assembly, follow Hero3D style) ─
-      const postT = ease(clamp((p - 0.62) / 0.38, 0, 1))
-      const idleY = idleBreath ? Math.sin(elapsed * 0.18) * 0.025 : 0
-      const idleX = idleBreath ? Math.sin(elapsed * 0.12) * 0.008 : 0
-      group.rotation.y = postT * -0.45 + idleY
-      group.rotation.x = postT *  0.04 + idleX
+      // ── Wireframe → Solid transition ────────────────────────────────────
+      // Wireframes visible at p=0, fade as solids emerge from p=0.08 onwards
+      wireMat.opacity = easeOut(clamp(1 - remap(p, 0.08, 0.42, 0, 1), 0, 1)) * 0.40
+      const solidity  = easeOut(clamp(remap(p, 0.12, 0.48, 0, 1), 0, 1))
+      mats.wall.opacity  = solidity
+      mats.mid.opacity   = solidity * 0.95
+      mats.slate.opacity = solidity
+      // Glass fades in at full opacity during its batch, then settles to 0.48
+      mats.glass.opacity = solidity * 0.48
 
-      // ── Camera fly-down from aerial to eye-level ──────────
-      // Phase 1 (p 0→0.65): aerial → mid
-      const ph1 = ease(clamp(p / 0.65, 0, 1))
-      // Phase 2 (p 0.65→1): mid → eye level
-      const ph2 = ease(clamp((p - 0.65) / 0.35, 0, 1))
+      // ── Group post-assembly rotation ────────────────────────────────────
+      const idleBreathe = p < 0.02
+      const rot   = ease(clamp((p - 0.62) / 0.38, 0, 1))
+      group.rotation.y = rot * -0.45 + (idleBreathe ? Math.sin(elapsed * 0.18) * 0.025 : 0)
+      group.rotation.x = rot *  0.04 + (idleBreathe ? Math.sin(elapsed * 0.12) * 0.008 : 0)
 
-      camera.position.x = lerp(lerp(4.0, 3.5, ph1), 3.8, ph2)
-      camera.position.y = lerp(lerp(6.0, 2.5, ph1), 1.3, ph2)
-      camera.position.z = lerp(lerp(4.0, 5.5, ph1), 5.8, ph2)
+      // ── Camera path ─────────────────────────────────────────────────────
+      // Three phases:
+      // 0.0 → 0.62: aerial (4,6,4) → mid (3.5,2.5,5.5)
+      // 0.62 → 0.82: mid → eye-level slight top (3.8,1.8,5.8)
+      // 0.82 → 1.0:  settle down (3.8,1.3,5.8) then zoom slight
+      const ph1 = ease(clamp(p / 0.62, 0, 1))
+      const ph2 = ease(clamp((p - 0.62) / 0.20, 0, 1))
+      const ph3 = ease(clamp((p - 0.82) / 0.18, 0, 1))
 
-      const lookY = lerp(lerp(0.0, 0.2, ph1), 0.2 - p * 0.1, ph2)
+      camera.position.x = lerp(lerp(lerp(4.0, 3.5, ph1), 3.8, ph2), 3.6, ph3)
+      camera.position.y = lerp(lerp(lerp(6.0, 2.5, ph1), 1.8, ph2), 1.3, ph3)
+      camera.position.z = lerp(lerp(lerp(4.0, 5.5, ph1), 5.8, ph2), 5.4, ph3)
+      const lookY = lerp(lerp(0.0, 0.2, ph1), 0.2, ph2) - p * 0.05
       camera.lookAt(0, lookY, 0)
 
-      // ── Lighting ──────────────────────────────────────────
-      ambient.intensity    = remap(p, 0, 0.35, 0.18, 0.30)
-      moonLight.intensity  = remap(p, 0, 0.20, 0.12, 0)
-      dawnLight.intensity  = remap(p, 0.20, 0.55, 0, 2.0) * (1 - remap(p, 0.65, 1.0, 0, 0.5))
-      noonLight.intensity  = remap(p, 0.55, 1.00, 0, 2.4)
-      hemi.intensity       = remap(p, 0.30, 0.80, 0, 0.55)
+      // ── Lighting ────────────────────────────────────────────────────────
+      ambient.intensity    = remap(p, 0, 0.35, 0.20, 0.32)
+      moonLight.intensity  = remap(p, 0, 0.22, 0.14, 0)
+      dawnLight.intensity  = remap(p, 0.22, 0.58, 0, 2.2) * (1 - remap(p, 0.65, 1.0, 0, 0.5))
+      noonLight.intensity  = remap(p, 0.55, 1.00, 0, 2.6)
+      hemi.intensity       = remap(p, 0.30, 0.80, 0, 0.58)
 
-      // ── Sky ───────────────────────────────────────────────
+      // ── Sky + Fog ────────────────────────────────────────────────────────
       const sky = lerpSky(p)
       renderer.setClearColor(sky)
       const fog = scene.fog as THREE.Fog
       fog.color.copy(sky)
-      fog.near = lerp(5,  20, ease(clamp(p * 1.4, 0, 1)))
-      fog.far  = lerp(14, 40, ease(clamp(p * 1.4, 0, 1)))
+      fog.near = lerp(5, 22, ease(clamp(p * 1.4, 0, 1)))
+      fog.far  = lerp(14, 45, ease(clamp(p * 1.4, 0, 1)))
 
       renderer.render(scene, camera)
+
+      // ── Annotation label positioning ─────────────────────────────────────
+      const cvs = canvasRef.current
+      if (!cvs) return
+      const W = cvs.offsetWidth
+      const H = cvs.offsetHeight
+      const svgEl = lineSvgRef.current
+      if (svgEl) svgEl.setAttribute('width', String(W))
+
+      ANNOTATIONS.forEach((ann, i) => {
+        const el = labelRefs.current[i]
+        if (!el) return
+
+        // Opacity window
+        const op = ease(clamp(remap(p, ann.lo, ann.lo + 0.06, 0, 1), 0, 1))
+                 * easeIn(clamp(remap(p, ann.hi - 0.06, ann.hi, 1, 0), 0, 1))
+        el.style.opacity = String(op)
+
+        if (op < 0.01) return
+
+        // World → screen
+        scrPos.set(ann.wx, ann.wy, ann.wz)
+        // Transform through group rotation
+        group.localToWorld(scrPos)
+        scrPos.project(camera)
+
+        const sx = (scrPos.x  *  0.5 + 0.5) * W
+        const sy = (-scrPos.y * 0.5 + 0.5) * H
+
+        el.style.transform = `translate(${sx + ann.dx}px, ${sy + ann.dy - el.offsetHeight * 0.5}px)`
+
+        // Draw connector line in SVG overlay
+        const lineEl = svgEl?.querySelector<SVGLineElement>(`[data-ann="${i}"]`)
+        if (lineEl) {
+          lineEl.setAttribute('x1', String(sx))
+          lineEl.setAttribute('y1', String(sy))
+          lineEl.setAttribute('x2', String(sx + ann.dx))
+          lineEl.setAttribute('y2', String(sy + ann.dy))
+          lineEl.style.opacity = String(op)
+        }
+      })
     }
     tick()
 
-    // Resize
+    // ── Resize ────────────────────────────────────────────────────────────
     const ro = new ResizeObserver(() => {
       const w = canvas.offsetWidth
       const h = canvas.offsetHeight
@@ -234,20 +299,88 @@ export default function ScrollHeroCanvas({ sectionRef }: Props) {
       ro.disconnect()
       renderer.dispose()
       scene.traverse(obj => {
-        if (obj instanceof THREE.Mesh) {
+        if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments) {
           obj.geometry.dispose()
-          const ms = Array.isArray(obj.material) ? obj.material : [obj.material]
-          ms.forEach(m => m.dispose())
         }
       })
+      Object.values(mats).forEach(m => m.dispose())
+      wireMat.dispose()
     }
   }, [sectionRef])
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ display: 'block', width: '100%', height: '100%' }}
-      aria-hidden
-    />
+    <div ref={wrapRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'block', width: '100%', height: '100%' }}
+        aria-hidden
+      />
+
+      {/* SVG connector lines for annotations */}
+      <svg
+        ref={lineSvgRef}
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}
+        height="100%"
+        aria-hidden
+      >
+        {ANNOTATIONS.map((_, i) => (
+          <line
+            key={i}
+            data-ann={i}
+            stroke="#F4F1EC"
+            strokeWidth="0.5"
+            strokeOpacity="0.5"
+            style={{ opacity: 0 }}
+          />
+        ))}
+      </svg>
+
+      {/* HTML annotation labels */}
+      {ANNOTATIONS.map((ann, i) => (
+        <div
+          key={i}
+          ref={el => { labelRefs.current[i] = el }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            pointerEvents: 'none',
+            opacity: 0,
+            willChange: 'transform, opacity',
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '3px',
+            padding: '8px 12px',
+            background: 'rgba(6,7,11,0.55)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            borderLeft: '1px solid rgba(244,241,236,0.2)',
+          }}>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.5625rem',
+              letterSpacing: '0.16em',
+              textTransform: 'uppercase' as const,
+              color: '#F4F1EC',
+              whiteSpace: 'nowrap',
+            }}>
+              {ann.title}
+            </span>
+            <span style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: '0.5rem',
+              letterSpacing: '0.08em',
+              color: 'rgba(244,241,236,0.45)',
+              whiteSpace: 'nowrap',
+            }}>
+              {ann.sub}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
