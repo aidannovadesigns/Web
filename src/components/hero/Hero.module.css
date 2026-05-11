@@ -1,0 +1,160 @@
+/* ─── Section ─────────────────────────────────────────── */
+.hero {
+  position: relative;
+  height: 200vh; /* scroll distance for 3D scrub */
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── 3D canvas ───────────────────────────────────────── */
+.canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ─── Dark gradient over canvas on the text side ─────── */
+.canvasGradient {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    105deg,
+    rgba(244,241,236,0.92) 0%,
+    rgba(244,241,236,0.72) 38%,
+    rgba(244,241,236,0.0)  65%
+  );
+  pointer-events: none;
+}
+
+/* ─── Text content ────────────────────────────────────── */
+.content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: clamp(24px, 6vw, 120px);
+  padding-bottom: 80px;
+  max-width: 56%;
+}
+
+@media (max-width: 768px) {
+  .content {
+    max-width: 100%;
+    justify-content: flex-end;
+    padding-bottom: clamp(64px, 12vw, 96px);
+    background: linear-gradient(to top, rgba(244,241,236,0.95) 40%, transparent);
+  }
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.6s 0.4s var(--ease-out-expo),
+              transform 0.6s 0.4s var(--ease-out-expo);
+}
+
+.eyebrow.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 7.5vw, 7.5rem);
+  font-weight: 200;
+  line-height: 1.0;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'opsz' 72, 'wght' 200;
+  margin-bottom: 40px;
+  color: var(--color-text);
+}
+
+.headlineLine {
+  display: block;
+}
+
+.body {
+  font-family: var(--font-sans);
+  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+  line-height: 1.65;
+  color: var(--color-mid);
+  max-width: 34ch;
+  margin-bottom: 48px;
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: opacity, transform;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.ctaLine {
+  width: 32px;
+  height: 1px;
+  background: var(--color-text);
+  transition: width 0.4s var(--ease-out-expo);
+}
+
+.cta:hover .ctaLine { width: 56px; }
+
+/* ─── Scroll indicator ────────────────────────────────── */
+.scrollIndicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: scrollFadeIn 0.6s 4.5s forwards;
+}
+
+.scrollLine {
+  width: 1px;
+  height: 40px;
+  background: var(--color-mid);
+  animation: scrollPulse 1.8s 4.5s ease-in-out infinite;
+  transform-origin: top;
+}
+
+.scrollLabel {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+}
+
+@keyframes scrollFadeIn { to { opacity: 1; } }
+@keyframes scrollPulse  {
+  0%, 100% { transform: scaleY(1); opacity: 0.4; }
+  50%       { transform: scaleY(0.6); opacity: 1; }
+}

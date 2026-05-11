@@ -1,0 +1,192 @@
+/* ─── Studio intro strip ──────────────────────────────── */
+.strip {
+  padding: 64px clamp(24px, 6vw, 120px);
+  border-bottom: 1px solid rgba(28,28,26,0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: end;
+}
+
+@media (max-width: 768px) {
+  .strip { grid-template-columns: 1fr; gap: 32px; }
+}
+
+.stripLabel {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  margin-bottom: 24px;
+}
+
+.stripHeading {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 48, 'wght' 300;
+}
+
+.stripBody {
+  font-family: var(--font-sans);
+  font-size: clamp(0.875rem, 1.1vw, 1rem);
+  line-height: 1.7;
+  color: var(--color-mid);
+  max-width: 42ch;
+  padding-top: 16px;
+}
+
+/* ─── Works preview ───────────────────────────────────── */
+.works {
+  padding: 96px clamp(24px, 6vw, 120px);
+  border-bottom: 1px solid rgba(28,28,26,0.08);
+}
+
+.worksHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 64px;
+}
+
+.worksTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 48, 'wght' 300;
+}
+
+.worksAll {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--color-mid);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: color 0.3s var(--ease-out-expo);
+}
+
+.worksAll:hover { color: var(--color-text); }
+
+.worksAllLine {
+  width: 24px;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.4s var(--ease-out-expo);
+}
+.worksAll:hover .worksAllLine { width: 40px; }
+
+/* ─── Work grid ───────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+}
+
+.gridItem {
+  overflow: hidden;
+  position: relative;
+  background: var(--color-mid);
+}
+
+.gridItem:nth-child(1) { grid-column: span 7; aspect-ratio: 16/10; }
+.gridItem:nth-child(2) { grid-column: span 5; aspect-ratio: 4/5; }
+.gridItem:nth-child(3) { grid-column: span 5; aspect-ratio: 4/5; }
+.gridItem:nth-child(4) { grid-column: span 7; aspect-ratio: 16/10; }
+
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; }
+  .gridItem:nth-child(n) { grid-column: span 1; aspect-ratio: 3/2; }
+}
+
+.gridImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.9s var(--ease-out-expo);
+  will-change: transform;
+}
+
+.gridItem:hover .gridImg { transform: scale(1.04); }
+
+.gridCaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  background: linear-gradient(to top, rgba(28,28,26,0.7) 0%, transparent 100%);
+  transform: translateY(100%);
+  transition: transform 0.5s var(--ease-out-expo);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gridItem:hover .gridCaption { transform: none; }
+
+.gridCaptionTitle {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 300;
+  color: #F4F1EC;
+  font-variation-settings: 'opsz' 24, 'wght' 300;
+}
+
+.gridCaptionMeta {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,241,236,0.6);
+}
+
+/* ─── Contact CTA ─────────────────────────────────────── */
+.cta {
+  padding: 128px clamp(24px, 6vw, 120px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 48px;
+}
+
+.ctaHeading {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  font-weight: 200;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'opsz' 72, 'wght' 200;
+  max-width: 16ch;
+}
+
+.ctaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+  padding: 20px 32px;
+  border: 1px solid rgba(28,28,26,0.2);
+  transition: background 0.3s var(--ease-out-expo),
+              border-color 0.3s var(--ease-out-expo),
+              color 0.3s var(--ease-out-expo);
+}
+
+.ctaLink:hover {
+  background: var(--color-text);
+  border-color: var(--color-text);
+  color: var(--color-bg);
+}

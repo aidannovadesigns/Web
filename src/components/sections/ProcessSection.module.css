@@ -1,0 +1,140 @@
+/* ─── Outer section (provides scroll distance) ────────── */
+.section {
+  position: relative;
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+/* ─── Pinned inner ────────────────────────────────────── */
+.pinned {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  align-items: center;
+  padding: 0 clamp(24px, 6vw, 120px);
+  gap: 64px;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .pinned {
+    grid-template-columns: 1fr;
+    padding: 80px clamp(24px, 6vw, 48px);
+    gap: 48px;
+    align-items: flex-start;
+    padding-top: 120px;
+  }
+}
+
+/* ─── Left: large step number ─────────────────────────── */
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.stepMeta {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.35);
+}
+
+.stepNumber {
+  font-family: var(--font-display);
+  font-size: clamp(6rem, 16vw, 14rem);
+  font-weight: 200;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: rgba(244, 241, 236, 0.08);
+  font-variation-settings: 'opsz' 144, 'wght' 200;
+  user-select: none;
+  display: block;
+  will-change: contents;
+}
+
+/* ─── Right: step content ─────────────────────────────── */
+.right {
+  position: relative;
+}
+
+.step {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* First step visible by default (GSAP sets the rest) */
+.step:first-child {
+  position: relative;
+  visibility: visible;
+  opacity: 1;
+}
+
+.stepIcon {
+  width: 40px;
+  height: 40px;
+  color: rgba(244, 241, 236, 0.5);
+}
+
+.stepTitle {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 48, 'wght' 300;
+  color: var(--color-bg);
+}
+
+.stepBody {
+  font-family: var(--font-sans);
+  font-size: clamp(0.875rem, 1.1vw, 1rem);
+  line-height: 1.7;
+  color: rgba(244, 241, 236, 0.55);
+  max-width: 38ch;
+}
+
+/* ─── Progress dots ────────────────────────────────────── */
+.progress {
+  position: absolute;
+  bottom: 48px;
+  left: clamp(24px, 6vw, 120px);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(244, 241, 236, 0.2);
+  transition: background 0.3s var(--ease-out-expo),
+              transform 0.3s var(--ease-out-expo);
+  display: block;
+}
+
+.dot.active {
+  background: rgba(244, 241, 236, 0.8);
+  transform: scale(1.5);
+}
+
+/* ─── Section label ────────────────────────────────────── */
+.sectionLabel {
+  position: absolute;
+  top: 48px;
+  left: clamp(24px, 6vw, 120px);
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.25);
+}
