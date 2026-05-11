@@ -1,0 +1,386 @@
+/* ── Scroll hero: full-viewport GLSL canvas + content stages ─────────────── */
+
+.section {
+  position: relative;
+  height: 450vh;  /* scroll distance */
+  will-change: transform;
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Canvas ──────────────────────────────────────────────────────────────── */
+.canvasWrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ── Stage overlay base ──────────────────────────────────────────────────── */
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  transition: none; /* all handled by GSAP */
+}
+
+.stageInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+}
+
+/* ── Stage 1: Brand identity ─────────────────────────────────────────────── */
+.stage1 .stageInner {
+  align-items: center;
+  gap: 20px;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: clamp(0.625rem, 0.9vw, 0.75rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.5);
+}
+
+.monogram {
+  width: clamp(80px, 10vw, 128px);
+  height: clamp(80px, 10vw, 128px);
+  color: #F4F1EC;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 7vw, 7rem);
+  font-weight: 200;
+  letter-spacing: 0.35em;
+  color: #F4F1EC;
+  font-variation-settings: 'opsz' 72, 'wght' 200;
+  margin: 0;
+  line-height: 1;
+}
+
+.coords {
+  font-family: var(--font-sans);
+  font-size: clamp(0.625rem, 0.85vw, 0.75rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.35);
+}
+
+/* ── Stage 2: Big statement ──────────────────────────────────────────────── */
+.stage2 {
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 0 clamp(32px, 7vw, 120px) clamp(64px, 8vh, 120px);
+}
+
+.stage2 .stageInner {
+  align-items: flex-start;
+  text-align: left;
+  gap: 32px;
+}
+
+.bigStatement {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  margin: 0;
+}
+
+.statLine,
+.statLineAccent {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 10.5vw, 10rem);
+  font-weight: 200;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  font-variation-settings: 'opsz' 72, 'wght' 200;
+  color: #F4F1EC;
+}
+
+.statLineAccent {
+  color: #D4A853; /* gold */
+  font-style: italic;
+  font-variation-settings: 'opsz' 72, 'wght' 200, 'SOFT' 30;
+}
+
+.stageCaption {
+  font-family: var(--font-sans);
+  font-size: clamp(0.75rem, 1.1vw, 0.9375rem);
+  letter-spacing: 0.08em;
+  color: rgba(244, 241, 236, 0.55);
+  max-width: 32ch;
+  line-height: 1.6;
+}
+
+/* ── Stage 3: Stats ──────────────────────────────────────────────────────── */
+.stage3 {
+  align-items: flex-start;
+  padding: 0 clamp(32px, 7vw, 120px);
+}
+
+.stage3 .stageInner {
+  align-items: flex-start;
+  gap: 48px;
+  max-width: 720px;
+}
+
+.stats {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 40px;
+}
+
+.stat:first-child {
+  padding-left: 0;
+}
+
+.statDivider {
+  width: 1px;
+  height: 64px;
+  background: rgba(244, 241, 236, 0.2);
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.statNum {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  font-weight: 200;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #D4A853;
+  font-variation-settings: 'opsz' 72, 'wght' 200;
+}
+
+.statLabel {
+  font-family: var(--font-sans);
+  font-size: clamp(0.6875rem, 0.9vw, 0.8125rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.5);
+  max-width: 14ch;
+  line-height: 1.4;
+}
+
+.credential {
+  font-family: var(--font-display);
+  font-size: clamp(1.125rem, 1.8vw, 1.625rem);
+  font-weight: 300;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: rgba(244, 241, 236, 0.75);
+  font-variation-settings: 'opsz' 24, 'wght' 300;
+  max-width: 40ch;
+}
+
+/* ── Stage 4: CTA ────────────────────────────────────────────────────────── */
+.stage4 {
+  align-items: center;
+  justify-content: center;
+}
+
+.stage4 .stageInner {
+  align-items: center;
+  text-align: center;
+  gap: 40px;
+}
+
+.ctaLabel {
+  font-family: var(--font-sans);
+  font-size: clamp(0.625rem, 0.85vw, 0.75rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(28, 28, 26, 0.45);
+}
+
+.ctaGroup {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.ctaPrimary {
+  pointer-events: all;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 36px;
+  background: #1C1C1A;
+  color: #F4F1EC;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.4s var(--ease-out-expo);
+}
+
+.ctaPrimary:hover { background: #2D4A5A; }
+
+.ctaPrimaryInner { flex-shrink: 0; }
+
+.ctaArrow {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform 0.4s var(--ease-out-expo);
+}
+
+.ctaPrimary:hover .ctaArrow { transform: translateX(4px); }
+
+.ctaSecondary {
+  pointer-events: all;
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(28, 28, 26, 0.5);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(28, 28, 26, 0.2);
+  transition: color 0.3s var(--ease-out-expo), border-color 0.3s var(--ease-out-expo);
+}
+
+.ctaSecondary:hover {
+  color: #1C1C1A;
+  border-color: #1C1C1A;
+}
+
+/* ── Scroll hint ─────────────────────────────────────────────────────────── */
+.scrollHint {
+  position: absolute;
+  bottom: clamp(28px, 4vh, 48px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.scrollHintLine {
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(to bottom, transparent, rgba(244,241,236,0.5));
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50%       { opacity: 1;   transform: scaleY(1.15); }
+}
+
+.scrollHintLabel {
+  font-family: var(--font-sans);
+  font-size: 0.5625rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(244, 241, 236, 0.4);
+}
+
+/* ── Progress track ──────────────────────────────────────────────────────── */
+.progressTrack {
+  position: absolute;
+  right: clamp(20px, 3vw, 40px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.progressItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.3;
+  transition: opacity 0.5s ease;
+}
+
+.progressItem.is-active { opacity: 1; }
+
+.progressNum {
+  font-family: var(--font-sans);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  color: rgba(244, 241, 236, 0.7);
+}
+
+.progressBar {
+  width: 24px;
+  height: 1px;
+  background: rgba(244, 241, 236, 0.2);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: #D4A853;
+  transition: width 0.1s linear;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .stage { opacity: 1 !important; }
+  .stage2, .stage3, .stage4 { opacity: 0 !important; }
+  .stage1 { opacity: 1 !important; }
+  .scrollHintLine { animation: none; }
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .section { height: 500vh; }
+
+  .stage2 {
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 clamp(24px, 5vw, 48px) clamp(48px, 7vh, 80px);
+  }
+
+  .stage2 .stageInner { align-items: center; text-align: center; }
+
+  .stats { flex-direction: column; gap: 32px; }
+  .stat  { padding: 0; }
+  .statDivider { width: 40px; height: 1px; align-self: auto; }
+
+  .stage3 {
+    align-items: center;
+    padding: 0 clamp(24px, 5vw, 48px);
+  }
+
+  .stage3 .stageInner { align-items: center; text-align: center; }
+
+  .ctaGroup { flex-direction: column; gap: 24px; }
+
+  .progressTrack { display: none; }
+}

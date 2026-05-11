@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from 'next/link'
-import Hero from '@/components/hero/Hero'
+import ScrollHero from '@/components/hero/ScrollHero'
 import ProcessSection from '@/components/sections/ProcessSection'
 import RevealText from '@/components/text/RevealText'
 import s from './page.module.css'
@@ -17,7 +17,7 @@ export default function Home() {
     <main>
 
       {/* ── 01 Hero ──────────────────────────────────── */}
-      <Hero />
+      <ScrollHero />
 
       {/* ── 02 Studio strip ─────────────────────────── */}
       <div className={s.strip}>
