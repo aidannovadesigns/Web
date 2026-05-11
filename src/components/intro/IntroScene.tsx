@@ -1,137 +1,111 @@
 'use client'
 
-import { useRef, useMemo, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-/* ─── The 3D Frame-monogram form ────────────────────────
-   The flat 2D monogram is given architectural depth:
-   outer box = building envelope, M strokes = structural
-   members, grid planes = blueprint section cuts.
-─────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────
+   All THREE objects created inside useEffect — this
+   guarantees they only run client-side, after mount, with
+   a live WebGL context. Never during SSR pre-render.
+───────────────────────────────────────────────────────── */
 function WireformMark({ opacityRef }: { opacityRef: React.MutableRefObject<number> }) {
-  const groupRef = useRef<THREE.Group>(null)
+  const groupRef    = useRef<THREE.Group>(null)
+  const matsRef     = useRef<{ mat: THREE.LineBasicMaterial; base: number }[]>([])
 
-  // Outer box — the square frame of the monogram becomes a cube
-  const outerBox = useMemo(() => {
-    const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.72, 1.72, 1.72))
-    const mat = new THREE.LineBasicMaterial({ color: '#F4F1EC', transparent: true, opacity: 0.55 })
-    return new THREE.LineSegments(geo, mat)
-  }, [])
+  useEffect(() => {
+    const group = groupRef.current
+    if (!group) return
 
-  // Inner box — structural interior reference
-  const innerBox = useMemo(() => {
-    const geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.08, 1.08, 1.08))
-    const mat = new THREE.LineBasicMaterial({ color: '#F4F1EC', transparent: true, opacity: 0.12 })
-    return new THREE.LineSegments(geo, mat)
-  }, [])
+    const add = (
+      verts: number[] | null,
+      boxSize: number | null,
+      color: string,
+      opacity: number,
+    ) => {
+      let geo: THREE.BufferGeometry
 
-  // M strokes — front and back face with depth connectors
-  const mStrokes = useMemo(() => {
-    const v = [
-      // Front face M
-      -0.46,  0.56, 0.14,   -0.46, -0.56, 0.14,  // left leg
-      -0.46,  0.56, 0.14,    0.00, -0.04, 0.14,   // left diag
-       0.46,  0.56, 0.14,    0.00, -0.04, 0.14,   // right diag
-       0.46,  0.56, 0.14,    0.46, -0.56, 0.14,   // right leg
-      // Back face M (slightly inset)
+      if (boxSize !== null) {
+        geo = new THREE.EdgesGeometry(new THREE.BoxGeometry(boxSize, boxSize, boxSize))
+      } else {
+        geo = new THREE.BufferGeometry()
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts!), 3))
+      }
+
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity })
+      group.add(new THREE.LineSegments(geo, mat))
+      matsRef.current.push({ mat, base: opacity })
+    }
+
+    // Outer box — building envelope
+    add(null, 1.72, '#F4F1EC', 0.55)
+    // Inner box — structural reference
+    add(null, 1.08, '#F4F1EC', 0.12)
+
+    // M strokes — front face + back face + depth connectors
+    add([
+      // Front face
+      -0.46,  0.56, 0.14,   -0.46, -0.56, 0.14,
+      -0.46,  0.56, 0.14,    0.00, -0.04, 0.14,
+       0.46,  0.56, 0.14,    0.00, -0.04, 0.14,
+       0.46,  0.56, 0.14,    0.46, -0.56, 0.14,
+      // Back face (slightly inset)
       -0.40,  0.50, -0.14,  -0.40, -0.50, -0.14,
       -0.40,  0.50, -0.14,   0.00, -0.06, -0.14,
        0.40,  0.50, -0.14,   0.00, -0.06, -0.14,
        0.40,  0.50, -0.14,   0.40, -0.50, -0.14,
-      // Depth connectors — top of legs, front→back
+      // Depth connectors
       -0.46,  0.56, 0.14,   -0.40,  0.50, -0.14,
        0.46,  0.56, 0.14,    0.40,  0.50, -0.14,
-      // Depth connectors — bottom of legs
       -0.46, -0.56, 0.14,   -0.40, -0.50, -0.14,
        0.46, -0.56, 0.14,    0.40, -0.50, -0.14,
-    ]
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(v), 3))
-    const mat = new THREE.LineBasicMaterial({ color: '#F4F1EC', transparent: true, opacity: 0.92 })
-    return new THREE.LineSegments(geo, mat)
-  }, [])
+    ], null, '#F4F1EC', 0.90)
 
-  // Blueprint grid — faint section-cut lines across the Z faces
-  const gridLines = useMemo(() => {
-    const lines: number[] = []
-    const h = 0.86      // half box size
-    const d = 0.86      // depth (front face)
-    const div = 4       // grid divisions each side
-
-    for (let i = -div; i <= div; i++) {
-      const t = i / div
-      // Horizontal lines on front face
-      lines.push(-h, t * h, d,   h, t * h, d)
-      // Vertical lines on front face
-      lines.push(t * h, -h, d,   t * h, h, d)
+    // Blueprint grid lines on front face
+    const grid: number[] = []
+    for (let i = -4; i <= 4; i++) {
+      const t = (i / 4) * 0.86
+      grid.push(-0.86, t, 0.86,  0.86, t, 0.86)  // horizontal
+      grid.push(t, -0.86, 0.86,  t, 0.86, 0.86)  // vertical
     }
+    add(grid, null, '#8C8680', 0.07)
 
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(lines), 3))
-    const mat = new THREE.LineBasicMaterial({ color: '#8C8680', transparent: true, opacity: 0.07 })
-    return new THREE.LineSegments(geo, mat)
+    // Accent horizon lines — coastal slate at varying depths
+    add([
+      -1.6,  0.00, -0.9,   1.6,  0.00, -0.9,
+      -1.6,  0.58, -0.3,   1.6,  0.58, -0.3,
+      -1.6, -0.58, -0.3,   1.6, -0.58, -0.3,
+    ], null, '#2D4A5A', 0.45)
+
+    return () => {
+      group.children.forEach((child) => {
+        if (child instanceof THREE.LineSegments) {
+          child.geometry.dispose()
+          ;(child.material as THREE.Material).dispose()
+        }
+      })
+      matsRef.current = []
+    }
   }, [])
 
-  // Orbiting accent lines — thin distant structural lines for depth
-  const accentLines = useMemo(() => {
-    const v = [
-      // Horizontal horizon references at various Z depths
-      -1.6, 0, -0.9,    1.6,  0, -0.9,
-      -1.6, 0.58, -0.3, 1.6,  0.58, -0.3,
-      -1.6,-0.58, -0.3, 1.6, -0.58, -0.3,
-    ]
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(v), 3))
-    const mat = new THREE.LineBasicMaterial({ color: '#2D4A5A', transparent: true, opacity: 0.45 })
-    return new THREE.LineSegments(geo, mat)
-  }, [])
+  useFrame(({ clock }) => {
+    const group = groupRef.current
+    if (!group) return
 
-  useFrame((state) => {
-    if (!groupRef.current) return
-    const t = state.clock.elapsedTime
-    // Architectural rotation — deliberate, not flashy
-    groupRef.current.rotation.y = t * 0.22
-    groupRef.current.rotation.x = Math.sin(t * 0.18) * 0.08
-    // Sync material opacity with intro fade-out
+    const t  = clock.elapsedTime
     const op = opacityRef.current
-    ;[outerBox, innerBox, mStrokes, gridLines, accentLines].forEach((obj) => {
-      if (obj.material instanceof THREE.LineBasicMaterial) {
-        obj.material.opacity = obj.material.opacity > 0.5
-          ? 0.92 * op
-          : (obj.material as THREE.LineBasicMaterial).opacity < 0.1
-            ? 0.07 * op
-            : obj.material.opacity * op / Math.max(op, 0.001) * op
-      }
+
+    group.rotation.y = t * 0.22
+    group.rotation.x = Math.sin(t * 0.18) * 0.08
+
+    matsRef.current.forEach(({ mat, base }) => {
+      mat.opacity = base * op
     })
-    // Simpler: just adjust group opacity via individual mats
-    outerBox.material.opacity = 0.55 * op
-    innerBox.material.opacity = 0.12 * op
-    mStrokes.material.opacity = 0.92 * op
-    gridLines.material.opacity = 0.07 * op
-    accentLines.material.opacity = 0.45 * op
   })
 
-  // Cleanup
-  useEffect(() => () => {
-    [outerBox, innerBox, mStrokes, gridLines, accentLines].forEach((o) => {
-      o.geometry.dispose()
-      ;(o.material as THREE.Material).dispose()
-    })
-  }, [outerBox, innerBox, mStrokes, gridLines, accentLines])
-
-  return (
-    <group ref={groupRef}>
-      <primitive object={outerBox} />
-      <primitive object={innerBox} />
-      <primitive object={mStrokes} />
-      <primitive object={gridLines} />
-      <primitive object={accentLines} />
-    </group>
-  )
+  return <group ref={groupRef} />
 }
 
-/* Camera subtle drift */
 function CameraRig() {
   useFrame(({ camera, clock }) => {
     const t = clock.elapsedTime
@@ -142,13 +116,12 @@ function CameraRig() {
   return null
 }
 
-/* ─── Exported canvas wrapper ─────────────────────────── */
 export default function IntroScene({ opacityRef }: { opacityRef: React.MutableRefObject<number> }) {
   return (
     <Canvas
       camera={{ position: [0, 0, 3.6], fov: 46 }}
       gl={{ antialias: true, alpha: true }}
-      dpr={typeof window !== 'undefined' ? Math.min(window.devicePixelRatio, 1.5) : 1}
+      dpr={[1, 1.5]}
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
     >
       <WireformMark opacityRef={opacityRef} />
